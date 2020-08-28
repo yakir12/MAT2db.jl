@@ -1,12 +1,37 @@
+struct Calibration{T}
+    videofile::String
+    extrinsic::Float64
+    intrinsic::T
+end
+
+_format(c::Calibration{Missing}) = string(basename(c.videofile), ": ", c.extrinsic)
+_format(c::Calibration) = string(basename(c.videofile), ": ", c.extrinsic, ", ", c.intrinsic)
+
+function play(videofile) 
+    err = Pipe()
+    p = ffplay() do exe
+        run(pipeline(`$exe -hide_banner $videofile`, stderr = err))
+    end
+    wait(p)
+    close(err.in)
+    ls = last(readlines(err))
+    for l in reverse(split(ls, '\r'))
+        m = match(r"(\d+\.\d+)\s+A-V", l)
+        if !isnothing(m)
+            return parse(Float64, only(m.captures))
+        end
+    end
+end
+
 function get_calibration()
     calibrations = deserialize(CALIBRATONS_FILE)
     if isempty(calibrations)
         addcalibration!(calibrations)
     else
-        options = copy(calibrations)
-        push!(options, "new file")
+        options = _format.(calibrations)
+        push!(options, "new calibration")
         menu = RadioMenu(options)
-        choice = request("Which video file are the POIs in?", menu)
+        choice = request("Which calibration calibrates these POIs?", menu)
         if choice == length(options)
             addcalibration!(calibrations)
         else
@@ -15,37 +40,27 @@ function get_calibration()
     end
 end
 
-function badvideofile(fullpath) 
-    path, file = splitdir(fullpath)
-    if file[1] == '.'
-        @warn "file is hidden"
-        return true
-    end
-    if !isfile(fullpath)
-        @warn "file does not exist"
-        return true
-    end
-    name, ext = splitext(file)
-    if !any(x -> occursin(Regex(x, "i"), ext), ("mp4", "avi", "mts", "mov"))
-        @warn "unidentified video format"
-        return true
-    end
-    return false
+# get_duration(videofile) = ffprobe() do exe
+#     parse(Float64, read(`$exe -i $videofile -show_entries format=duration -v quiet -of csv="p=0"`, String))
+# end
+
+
+function get_extrinsic(videofile)
+    println("Navigate until the board is flat and visible, then close the video-player")
+    play(videofile)
 end
 
-function extrinsic()
+function get_intrinsic(videofile)
     @label start
-    println("When in the video is the board flat and visible?")
-    t = readline()
-    if badtime(t)
-        @warn "wrong time format"
+    println("Navigate until the user starts moving the board, then close the video-player")
+    t1 = play(videofile)
+    println("Navigate until the user stops moving the board, then close the video-player")
+    t2 = play(videofile)
+    if t1 ≥ t2
+        @warn "the starting time cannot come after the ending time"
         @goto start
-    end::::
-end
-
-function intrinsic()
-    println("When in the video is the board flat and visible?")
-    t = readline()
+    end
+    return t1 => t2
 end
 
 function addcalibration!(calibrations)
@@ -57,11 +72,15 @@ function addcalibration!(calibrations)
     menu = RadioMenu(options)
     choice = request("Which calibration type is it?", menu)
     if choice == 1
+        extrinsic = get_extrinsic(videofile)
+        intrinsic = missing
     else
-
-
-    push!(calibrations, videofile)
+        extrinsic = get_extrinsic(videofile)
+        intrinsic = get_intrinsic(videofile)
+    end
+    c = Calibration(videofile, extrinsic, intrinsic)
+    push!(calibrations, c)
     serialize(CALIBRATONS_FILE, calibrations)
-    videofile
+    c
 end
 
