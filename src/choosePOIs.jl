@@ -1,16 +1,17 @@
-@ctx function getimg!(t)
-    c = context()
-    video = c.data[:video]
-    img = c.data[:img]
-    seek(video, t)
-    img[] = rotr90(read(video))
+function getimg(videofile, t)
+    imgraw = ffmpeg() do exe
+        read(`$exe -loglevel 8 -ss $t -i $videofile -vf 'yadif=1,scale=sar*iw:ih' -q:v 2 -vframes 1 -f image2pipe -`)
+    end
+    return rotr90(ImageMagick.load_(imgraw))
 end
 
-@ctx function plotit!(x::TimedCoordinate)
-    getimg!(x.t)
+function plotit(x::TimedCoordinate)
     c = context()
     xy = c.data[:xy]
     menu = c.data[:menu]
+    videofile = c.data[:videofile]
+    img = c.data[:img]
+    img[] = getimg(videofile, x.t)
     xy[] = x.xy
     c = Condition()
     on(menu.selection) do _
@@ -24,11 +25,14 @@ end
     return menu.selection[]
 end
 
-plotit!(xy, img, xs::Track, _) = "track"
+plotit(xs::Track) = "track"
 
-@ctx function get_pois(data, videofile)
-    @memo video = VideoIO.openvideo(videofile)
-    @memo img = Node(rotr90(read(video)))
+function get_pois(data, videofile)
+    @memo videofile = videofile
+    @memo img = Node(getimg(videofile, 0))
+    on(img) do i
+        FileIO.save(string(rand(1:9, 5), ".jpg"), i)
+    end
     scene, layout = layoutscene()
     @memo menu = LMenu(scene, options = ["nest", "feeder", "dropoff", "pickup"])
     layout[1, 1] = vbox!(LText(scene, "Choose correct POI", width = nothing), menu, tellheight = false, width = 200)
@@ -39,7 +43,7 @@ plotit!(xy, img, xs::Track, _) = "track"
     image!(ax, img)
     scatter!(ax, xy)
     glfw_window = to_native(display(scene))
-    pois = plotit!.(data)
+    pois = plotit.(data)
     GLFW.SetWindowShouldClose(glfw_window, true) 
     return pois
 end

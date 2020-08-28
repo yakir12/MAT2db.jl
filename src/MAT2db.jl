@@ -1,7 +1,9 @@
 module MAT2db
 
+using FileIO
+
 using MAT, SparseArrays, StaticArrays, Serialization
-using AbstractPlotting, GLMakie, VideoIO
+using AbstractPlotting, GLMakie, FFMPEG_jll, ImageMagick
 using AbstractPlotting.MakieLayout
 using GLMakie.GLFW
 using GLMakie: to_native
