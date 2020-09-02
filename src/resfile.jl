@@ -24,25 +24,34 @@ function get_resfile()
     resfile
 end
 
-const Coordinate = SVector{2, Float64}
+const SpaceTime = SVector{3, Float64}
 
-struct TimedCoordinate
-    xy::Coordinate
-    t::Float64
+abstract type POI end
+
+struct Singular <: POI
+    xyt::SpaceTime
+    video::String
 end
-TimedCoordinate(x, y, t) = TimedCoordinate(Coordinate(x, y), t)
+Singular(x, y, t, v) = Singular(SpaceTime(x, y, t), v)
+
+time(x::Singular) = x.xyt[3]
+space(x::Singular) = x.xyt[1:2]
 
 # struct Vertices
-#     xys::Vector{Coordinate}
+#     xys::Vector{SpaceTime}
 #     t::Float64
 # end
 
-struct Track
-    xys::Vector{TimedCoordinate}
+struct Interval <: POI
+    xyts::Vector{SpaceTime}
+    video::String
 end
-Track(x, y, t) = Track(TimedCoordinate.(x, y, t))
+Interval(x, y, t, v) = Interval(SpaceTime.(x, y, t), v)
 
-function mat2data(resfile)
+time(x::Interval) = x.xyts[1][3]
+space(x::Interval) = x.xyts[1][1:2]
+
+function resfile2coords(resfile,videofile)
     matopen(resfile) do io
         xdata = read(io, "xdata")
         fr = read(io, "status")["FrameRate"]
@@ -50,19 +59,30 @@ function mat2data(resfile)
         xvals = nonzeros(xdata)
         yvals = nonzeros(read(io, "ydata"))
         n = size(xdata, 2)
-        data = Union{TimedCoordinate, Track}[]
+        coords = POI[]
         for j = 1:n
             is = nzrange(xdata, j)
             isempty(is) && continue
             a = if length(is) == 1
                 i = only(is)
-                TimedCoordinate(xvals[i], yvals[i], rows[i]/fr)
+                Singular(xvals[i], yvals[i], rows[i]/fr, videofile)
             else
-                Track(xvals[is], yvals[is], rows[is]/fr)
+                Interval(xvals[is], yvals[is], rows[is]/fr, videofile)
             end
-            push!(data, a)
+            push!(coords, a)
         end
-        return data
+        return coords
     end
 end
 
+function badcoords(coords)
+    if isempty(coords) 
+        @warn "res file was empty"
+        return true
+    end
+    if all(x -> !isa(x, Interval), coords) 
+        @warn "res file missing track"
+        return true
+    end
+    return false
+end

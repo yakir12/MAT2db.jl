@@ -1,16 +1,13 @@
-function get_videofile()
-    videofiles = deserialize(VIDEOFILES_FILE)
+function get_videofile(videofiles, msg)
     if isempty(videofiles)
-        addvideofile!(videofiles)
-    else
-        options = copy(videofiles)
-        push!(options, "new file")
-        menu = RadioMenu(options)
-        choice = request("Which video file are the POIs in?", menu)
-        if choice == length(options)
-            addvideofile!(videofiles)
+        newvideo() else
+        push!(videofiles, "new file")
+        menu = RadioMenu(videofiles)
+        choice = request(msg, menu)
+        if choice == length(videofiles)
+            newvideo()
         else
-            options[choice]
+            videofiles[choice]
         end
     end
 end
@@ -33,13 +30,11 @@ function badvideofile(fullpath)
     return false
 end
 
-function addvideofile!(videofiles)
+function newvideo()
     @label start
     println("What is the file-path to the new video?")
     videofile = readline()
     badvideofile(videofile) && @goto start
-    push!(videofiles, videofile)
-    serialize(VIDEOFILES_FILE, videofiles)
     videofile
 end
 
