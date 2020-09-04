@@ -1,124 +1,142 @@
 struct Calibration{T}
-    checkers::Tuple{Int, Int}
     video::String
     extrinsic::Float64
     intrinsic::T
+    checker_corners::Tuple{Int, Int}
+    checker_size::Float64
 end
 
 const Intrinsic = Pair{Float64, Float64}
 
-_format(c::Calibration{Missing}) = string(basename(c.video), ": ", c.extrinsic)
-_format(c::Calibration) = string(basename(c.video), ": ", c.extrinsic, ", ", c.intrinsic)
+# _format(c::Calibration{Missing}) = string(basename(c.video), ": ", c.extrinsic)
+# _format(c::Calibration) = string(basename(c.video), ": ", c.extrinsic, ", ", c.intrinsic)
 
-function play(videofile) 
-    err = Pipe()
-    p = ffplay() do exe
-        run(pipeline(`$exe -hide_banner $videofile`, stderr = err))
-    end
-    wait(p)
-    close(err.in)
-    ls = last(readlines(err))
-    for l in reverse(split(ls, '\r'))
-        m = match(r"(\d+\.\d+)\s+A-V", l)
-        if !isnothing(m)
-            return parse(Float64, only(m.captures))
-        end
-    end
-end
-
-function get_calibration(calibrations, videofiles)
-    if isempty(calibrations)
-        return addcalibration!()
-    else
-        options = _format.(calibrations)
-        push!(options, "new calibration")
-        menu = RadioMenu(options)
-        choice = request("Which calibration calibrates these POIs?", menu)
-        if choice == length(options)
-            return addcalibration!(calibrations)
-        else
-            return calibrations[choice]
-        end
-    end
-end
-
-# get_duration(videofile) = ffprobe() do exe
-#     parse(Float64, read(`$exe -i $videofile -show_entries format=duration -v quiet -of csv="p=0"`, String))
-# end
-
-
-function get_extrinsic(videofile)
-    println("Navigate until the board is flat and visible, then close the video-player")
-    play(videofile)
-end
-
-function get_intrinsic(videofile)
-    @label start
-    println("Navigate until the user starts moving the board, then close the video-player")
-    t1 = play(videofile)
-    println("Navigate until the user stops moving the board, then close the video-player")
-    t2 = play(videofile)
-    return Intrinsic(t1, t2)
-end
-
-badintrinsic(::Missing) = false
-function badintrinsic(intrinsic::Intrinsic) 
-    if !issorted(intrinsic) 
-        @warn "the starting time cannot come after the ending time" 
-        return true
-    end
-    return false
-end
-
-function badcheckers(x) 
-    if any(<(2), x)
-        @warn "the number of checkers must be larger than 1" 
-        return true
-    end
-    return false
-end
-
-function get_checkers()
-    @label start
-    println("How many checkers are there (e.g. `7 8`, `7x8`, `7 by 8`, etc.)?")
-    str = readline()
-    m = match(r"(\d+)", str)
-    if isnothing(m) || length(m.captures) ≠ 2
-        @warn "bad format, try again"
-        @goto start
-    end
-    (sort(parse.(Int, m.captures))...)
-end
-
-function addcalibration!(videofiles)
-    calib_videofile = get_videofile(videofiles, "Which video file is the calibration in?")
-    checkers = get_checkers()
-    options = ["Only extrinsic", "Intrinsic and extrinsic"]
-    menu = RadioMenu(options)
-    choice = request("Which calibration type is it?", menu)
-    if choice == 1
-        extrinsic = get_extrinsic(videofile)
-        intrinsic = missing
-    else
-        @label start
-        extrinsic = get_extrinsic(videofile)
-        intrinsic = get_intrinsic(videofile)
-    end
-    badintrinsic(intrinsic) && @goto start
-    Calibration(calib_videofile, extrinsic, intrinsic)
-end
-
-function getgrayimg(file, t)
+# tmix=frames=15:weights="1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
+#=function getgrayimg(file, t)
     imgraw = ffmpeg() do exe
-        read(`$exe -loglevel 8 -ss $t -i $file -vf format=gray,yadif=1,tmix=frames=15:weights="1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",scale=sar"*"iw:ih -pix_fmt gray -vframes 1 -f image2pipe -`)
+        read(`$exe -loglevel 8 -ss $t -i $file -vf format=gray,yadif=1,scale=sar"*"iw:ih -pix_fmt gray -vframes 1 -f image2pipe -`)
     end
     # return ImageIO.load(imgraw)
     return rotr90(reinterpret(UInt8, green.(ImageMagick.load_(imgraw))))
-end
+end=#
 
 # -vf 'yadif=1    ,,scale=sar*iw:ih
-function make_calibration(c::Calibration{Missing})
+#=function make_calibration(c::Calibration{Missing})
     img = getgrayimg(c.video, c.extrinsic)
-    ret, corners = cv2.findChessboardCorners(img, (31,23))
+    ret, corners = cv2.findChessboardCorners(img, c.checkers)
+end=#
+
+
+
+function spawnmatlab(check, intrinsic, extrinsic)
+    mat"""
+    warning('off','all')
+    [imagePoints, boardSize, imagesUsed] = detectCheckerboardPoints($intrinsic);
+    $kept = 1:length($intrinsic);
+    $kept = $kept(imagesUsed);
+    extrinsicI = imread($extrinsic);
+    sz = size(extrinsicI);
+    worldPoints = generateCheckerboardPoints(boardSize, $check);
+    %%
+    params = estimateCameraParameters(imagePoints, worldPoints, 'ImageSize', sz, 'EstimateSkew', true, 'NumRadialDistortionCoefficients', 3, 'EstimateTangentialDistortion', true, 'WorldUnits', 'cm');
+    n = size(imagePoints, 3);
+    errors = zeros(n,1);
+    for i = 1:n
+        [R,t] = extrinsics(imagePoints(:,:,i), worldPoints, params);
+        newWorldPoints = pointsToWorld(params, R, t, imagePoints(:,:,i));
+        errors(i) = mean(vecnorm(worldPoints - newWorldPoints, 1, 2));
+    end
+    kill = errors > 1;
+    while any(kill)
+        imagePoints(:,:,kill) = [];    
+        $kept(kill) = [];
+        params = estimateCameraParameters(imagePoints, worldPoints, 'ImageSize', sz, 'EstimateSkew', true, 'NumRadialDistortionCoefficients', 3, 'EstimateTangentialDistortion', true, 'WorldUnits', 'cm');
+        n = size(imagePoints, 3);
+        errors = zeros(n,1);
+        for i = 1:n
+            [R,t] = extrinsics(imagePoints(:,:,i), worldPoints, params);
+            newWorldPoints = pointsToWorld(params, R, t, imagePoints(:,:,i));
+            errors(i) = mean(vecnorm(worldPoints - newWorldPoints, 1, 2));
+        end
+        kill = errors > 1;
+    end
+    $mean_error = mean(errors);
+    %%
+    MinCornerMetric = 0.15;
+    xy = detectCheckerboardPoints(extrinsicI, 'MinCornerMetric', MinCornerMetric);
+    MinCornerMetric = 0.;
+    while size(xy,1) ~= size(worldPoints, 1)
+        MinCornerMetric = MinCornerMetric + 0.05;
+        xy = detectCheckerboardPoints(extrinsicI, 'MinCornerMetric', MinCornerMetric);
+    end
+    [$R, $t] = extrinsics(xy, worldPoints, params);
+    $parameters = params
+    """
+    ϵ = mean_error
+    (; parameters, R, t, ϵ)
+    
 end
+
+function spawnmatlab(check, extrinsic, ::Missing)
+    mat"""
+    warning('off','all')
+    [imagePoints, boardSize] = detectCheckerboardPoints($extrinsic);
+    worldPoints = generateCheckerboardPoints(boardSize, $check);
+    tform_ = fitgeotrans(imagePoints, worldPoints, 'projective');
+    $tform = tform_.T;
+    %%
+    [x, y] =  transformPointsForward(tform_, imagePoints(:,1), imagePoints(:,2));
+    $mean_error = mean(vecnorm(worldPoints - [x, y], 2, 2))
+    """
+    ϵ = mean_error
+    (; tform, ϵ)
+end
+
+extract(::Missing, _, path) = nothing
+function extract(ss::Float64, i, path)
+    ffmpeg() do exe
+        to = joinpath(path, "extrinsic.png")
+        run(`$exe -loglevel 8 -ss $ss -i $i -vf format=gray,yadif=1,scale=sar"*"iw:ih -pix_fmt gray -vframes 1 $to`)
+        to
+    end
+end
+function extract(intrinsic::Intrinsic, i, path)
+    ss, t2 = intrinsic
+    t = t2 - ss
+    ffmpeg() do exe
+        run(`$exe -loglevel 8 -ss $ss -i $i -t $t -r 2 -vf format=gray,yadif=1,scale=sar"*"iw:ih -pix_fmt gray $path`)
+    end
+    readdir(path, join = true)
+end
+
+function build_calibration(c)
+    mktempdir() do path
+        extrinsic = extract(c.extrinsic, c.video, path)
+        intrinsic = extract(c.intrinsic, c.video, path)
+        spawnmatlab(c.checker_size, extrinsic, intrinsic)
+    end
+end
+
+
+
+
+
+function calibrate_csv(csvfile, xyt::P) where {P <: AbstractPeriod}
+    n = size(xyt.data,1)
+    xy1 = [xyt.data[:,1:2] ones(n)]
+    tform = readdlm(csvfile, ',', Float64)
+    xy2 = xy1*tform
+    xy3 = xy2[:,1:2]./xy2[:,3]
+    P([xy3 xyt.data[:,3]])
+end
+
+function calibrate_mat(matfile, xyt::P) where {P <: AbstractPeriod}
+    xy = xyt.data[:,1:2]
+    mat"""
+    a = load($matfile);
+    $xy = pointsToWorld(a.params, a.R, a.t, $xy);
+    """
+    P([xy xyt.data[:,3]])
+end
+
 

@@ -1,0 +1,2 @@
+resfile, poi_videofile,poi_names,calib_videofile,extrinsic,intrinsic,checker_corners,checker_size
+/home/yakir/MAT2db.jl/example/resfile.res,/home/yakir/MAT2db.jl/example/20200116_B4_Dright.mov,"nest,initialfeeder,feeder,track",/home/yakir/MAT2db.jl/example/20200116_B4_Dright.mov,42.402,"30.996,46.775","10,9",39

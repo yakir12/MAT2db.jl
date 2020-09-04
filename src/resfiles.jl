@@ -1,29 +1,3 @@
-function badresfile(fullpath) 
-    path, file = splitdir(fullpath)
-    if file[1] == '.'
-        @warn "file is hidden"
-        return true
-    end
-    if !isfile(fullpath)
-        @warn "file does not exist"
-        return true
-    end
-    name, ext = splitext(file)
-    if ext ≠ ".res"
-        @warn "unidentified format"
-        return true
-    end
-    return false
-end
-
-function get_resfile()
-    @label start
-    println("What is the file-path to the res-file?")
-    resfile = readline()
-    badresfile(resfile) && @goto start
-    resfile
-end
-
 const SpaceTime = SVector{3, Float64}
 
 abstract type POI end
@@ -51,7 +25,7 @@ Interval(x, y, t, v) = Interval(SpaceTime.(x, y, t), v)
 time(x::Interval) = x.xyts[1][3]
 space(x::Interval) = x.xyts[1][1:2]
 
-function resfile2coords(resfile,videofile)
+function resfile2coords(resfile, videofile)
     matopen(resfile) do io
         xdata = read(io, "xdata")
         fr = read(io, "status")["FrameRate"]
@@ -73,16 +47,4 @@ function resfile2coords(resfile,videofile)
         end
         return coords
     end
-end
-
-function badcoords(coords)
-    if isempty(coords) 
-        @warn "res file was empty"
-        return true
-    end
-    if all(x -> !isa(x, Interval), coords) 
-        @warn "res file missing track"
-        return true
-    end
-    return false
 end
