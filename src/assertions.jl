@@ -20,7 +20,6 @@ function a_calibration(c)
     @assert isfile(c.video) "calibration video file does not exist"
     duration = get_duration(c.video)
     @assert 0 ≤ c.extrinsic ≤ duration "extrinsic time stamp is not in the video"
-    @assert all(>(2), c.checker_corners) "checkerboard must contain more than 2 corners"
     @assert c.checker_size > 0 "checkers must be larger than zero"
     a_intrinsic(c.intrinsic, duration)
 end

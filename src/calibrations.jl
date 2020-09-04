@@ -2,7 +2,6 @@ struct Calibration{T}
     video::String
     extrinsic::Float64
     intrinsic::T
-    checker_corners::Tuple{Int, Int}
     checker_size::Float64
 end
 
@@ -27,8 +26,26 @@ end=#
 end=#
 
 
+function spawnmatlab(check, extrinsic, ::Missing)
+    mat"""
+    warning('off','all')
+    [imagePoints, boardSize] = detectCheckerboardPoints($extrinsic);
+    worldPoints = generateCheckerboardPoints(boardSize, $check);
+    tform_ = fitgeotrans(imagePoints, worldPoints, 'projective');
+    $tform = tform_.T;
+    %%
+    [x, y] = transformPointsForward(tform_, imagePoints(:,1), imagePoints(:,2));
+    $sz = boardSize - 1;
+    $errors = reshape(vecnorm(worldPoints - [x, y], 2, 2), $sz);
+    """
+    x = range(0, step = check, length = Int(sz[1]))
+    y = range(0, step = check, length = Int(sz[2]))
+    ϵ = Interpolations.CubicSplineInterpolation((x, y), errors)
+    (; tform, ϵ, x, y)
+end
 
-function spawnmatlab(check, intrinsic, extrinsic)
+
+function spawnmatlab(check, extrinsic, intrinsic)
     mat"""
     warning('off','all')
     [imagePoints, boardSize, imagesUsed] = detectCheckerboardPoints($intrinsic);
@@ -77,22 +94,7 @@ function spawnmatlab(check, intrinsic, extrinsic)
     
 end
 
-function spawnmatlab(check, extrinsic, ::Missing)
-    mat"""
-    warning('off','all')
-    [imagePoints, boardSize] = detectCheckerboardPoints($extrinsic);
-    worldPoints = generateCheckerboardPoints(boardSize, $check);
-    tform_ = fitgeotrans(imagePoints, worldPoints, 'projective');
-    $tform = tform_.T;
-    %%
-    [x, y] =  transformPointsForward(tform_, imagePoints(:,1), imagePoints(:,2));
-    $mean_error = mean(vecnorm(worldPoints - [x, y], 2, 2))
-    """
-    ϵ = mean_error
-    (; tform, ϵ)
-end
-
-extract(::Missing, _, path) = nothing
+extract(::Missing, _, path) = missing
 function extract(ss::Float64, i, path)
     ffmpeg() do exe
         to = joinpath(path, "extrinsic.png")
@@ -121,16 +123,15 @@ end
 
 
 
-function calibrate_csv(csvfile, xyt::P) where {P <: AbstractPeriod}
-    n = size(xyt.data,1)
-    xy1 = [xyt.data[:,1:2] ones(n)]
-    tform = readdlm(csvfile, ',', Float64)
-    xy2 = xy1*tform
-    xy3 = xy2[:,1:2]./xy2[:,3]
-    P([xy3 xyt.data[:,3]])
+calibrate(tform, s::Singular) = calibrate(tform, s.xyt)
+calibrate(tform, s::Interval) = calibrate.(Ref(tform), s.xyts)
+function calibrate(tform, xyt::SpaceTime)
+    xy2 = [xyt[1] xyt[2] 1.0]*tform
+    xy3 = xy2[1:2]/xy2[3]
+    SpaceTime(xy3..., xyt[3])
 end
 
-function calibrate_mat(matfile, xyt::P) where {P <: AbstractPeriod}
+function calibrate_mat(matfile, xyt)
     xy = xyt.data[:,1:2]
     mat"""
     a = load($matfile);

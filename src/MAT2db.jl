@@ -1,32 +1,31 @@
 module MAT2db
 
-using FileIO, FilePathsBase
+using FileIO, FilePathsBase, CoordinateTransformations, ImageTransformations
 
-using MATLAB
+using MATLAB, Interpolations
 using MAT, SparseArrays, StaticArrays, Serialization, CSV
-using AbstractPlotting, GLMakie, FFMPEG_jll, ImageMagick, FFplay_jll, Colors, PyCall, ImageIO
+using AbstractPlotting, GLMakie, FFMPEG_jll, ImageMagick, FFplay_jll, Colors, ImageIO
 using AbstractPlotting.MakieLayout
 using GLMakie.GLFW
 using GLMakie: to_native
 using REPL.TerminalMenus
 using ContextTracking
-using FFMPEG 
 
 const pathtype = String#typeof(Path())
 const DATABASE_FILE = "database"
 # const POI_NAMES = ["nest", "feeder", "dropoff", "pickup"]
-const cv2 = PyNULL()
-const csvfile_columns = Dict(:resfile => pathtype, :poi_videofile => pathtype, :poi_names => String, :calib_videofile => pathtype, :extrinsic => Float64, :intrinsic => String, :checker_corners => String, :checker_size => Float64)
+# const cv2 = PyNULL()
+const csvfile_columns = Dict(:resfile => pathtype, :poi_videofile => pathtype, :poi_names => String, :calib_videofile => pathtype, :extrinsic => Float64, :intrinsic => String, :checker_size => Float64)
 
-function __init__()
-    copy!(cv2, pyimport_conda("cv2", "cv2"))
-end
+# function __init__()
+    # copy!(cv2, pyimport_conda("cv2", "cv2"))
+# end
 
 if !isfile(DATABASE_FILE)
     serialize(DATABASE_FILE, nothing)
 end
 
-include.(("resfiles.jl", "assertions.jl", "calibrations.jl"))
+include.(("resfiles.jl", "assertions.jl", "calibrations.jl", "quality.jl"))
 
 function loadcsv(file)
     @assert isfile(file) "$file does not exist"
@@ -41,6 +40,9 @@ function loadcsv(file)
     return t
 end
 
+parse_intrinsic(::Missing) = missing
+parse_intrinsic(x) = Intrinsic(parse.(Float64, split(x, ','))...)
+
 function process_csv(csvfile)
     t = loadcsv(csvfile)
     map(t) do row
@@ -49,22 +51,22 @@ function process_csv(csvfile)
                    split(row.poi_names, ','),
                    row.calib_videofile,
                    row.extrinsic,
-                   tuple(parse.(Float64, split(row.intrinsic, ','))...),
-                   tuple(parse.(Int, split(row.checker_corners, ','))...), 
+                   parse_intrinsic(row.intrinsic),
                    row.checker_size)
     end
 end
 
-function create_run(resfile, poi_videofile, poi_names, calib_videofile, extrinsic, intrinsic, checker_corners, checker_size)
+function create_run(resfile, poi_videofile, poi_names, calib_videofile, extrinsic, intrinsic, checker_size)
     a_resfile(resfile)
     a_poi_videofile(poi_videofile)
     coords = resfile2coords(resfile, poi_videofile)
     a_coords(coords)
     a_poi_names(poi_names, length(coords))
     pois = Dict(zip(poi_names, coords))
-    calibration = Calibration(calib_videofile, extrinsic, intrinsic, checker_corners, checker_size)
+    calibration = Calibration(calib_videofile, extrinsic, intrinsic, checker_size)
     a_calibration(calibration)
-    return (; pois, calibration)
+    calib = build_calibration(calibration)
+    return (; pois, calib)
 end
 
 

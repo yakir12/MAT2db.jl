@@ -140,6 +140,12 @@ git-tree-sha1 = "81685fee51fc5168898e3cbd8b0f01506cd9148e"
 uuid = "d38c429a-6771-53c6-b99e-75d170b6e991"
 version = "0.5.4"
 
+[[CoordinateTransformations]]
+deps = ["LinearAlgebra", "StaticArrays"]
+git-tree-sha1 = "c230b1d94db9fdd073168830437e64b9db627fcb"
+uuid = "150eb455-5306-5404-9cee-2592286d6298"
+version = "0.6.0"
+
 [[DataAPI]]
 git-tree-sha1 = "176e23402d80e7743fc26c19c681bfb11246af32"
 uuid = "9a962f9c-6df0-11e9-0e5d-c546b8b5ee8a"
@@ -332,6 +338,12 @@ git-tree-sha1 = "85bd2e586a10ae0eab856125bf5245e0d36384a7"
 uuid = "0234f1f7-429e-5d53-9886-15a909be8d59"
 version = "1.10.5+5"
 
+[[IdentityRanges]]
+deps = ["OffsetArrays"]
+git-tree-sha1 = "be8fcd695c4da16a1d6d0cd213cb88090a150e3b"
+uuid = "bbac6d45-d8f3-5730-bfe4-7a449cd117ca"
+version = "0.3.1"
+
 [[ImageCore]]
 deps = ["Colors", "FixedPointNumbers", "Graphics", "MappedArrays", "MosaicViews", "OffsetArrays", "PaddedViews", "Reexport", "Requires"]
 git-tree-sha1 = "a652c05f8f374861580d420b420fddf3e2e84312"
@@ -355,6 +367,12 @@ deps = ["JpegTurbo_jll", "Libdl", "Libtiff_jll", "Pkg", "Zlib_jll", "libpng_jll"
 git-tree-sha1 = "1c0a2295cca535fabaf2029062912591e9b61987"
 uuid = "c73af94c-d91f-53ed-93a7-00f77d67a9d7"
 version = "6.9.10-12+3"
+
+[[ImageTransformations]]
+deps = ["AxisAlgorithms", "ColorVectorSpace", "CoordinateTransformations", "IdentityRanges", "ImageCore", "Interpolations", "OffsetArrays", "Rotations", "StaticArrays"]
+git-tree-sha1 = "5a0207dafba64650268bb5718875c0eea441e1ee"
+uuid = "02fcd773-0e25-5acc-982a-7f6622650795"
+version = "0.8.6"
 
 [[IndirectArrays]]
 git-tree-sha1 = "c2a145a145dc03a7620af1444e0264ef907bd44f"
@@ -686,6 +704,12 @@ deps = ["Libdl", "Pkg"]
 git-tree-sha1 = "d76185aa1f421306dec73c057aa384bad74188f0"
 uuid = "f50d1b31-88e8-58de-be2c-1cc44531875f"
 version = "0.2.2+1"
+
+[[Rotations]]
+deps = ["LinearAlgebra", "StaticArrays", "Statistics"]
+git-tree-sha1 = "445b72242dbdecba9bfc42034daafdd901bbf6a9"
+uuid = "6038ab10-8711-5258-84ad-4b1120ba62dc"
+version = "1.0.1"
 
 [[SDL2_jll]]
 deps = ["Libdl", "Libglvnd_jll", "Pkg", "Xorg_libX11_jll", "Xorg_libXScrnSaver_jll", "Xorg_libXcursor_jll", "Xorg_libXext_jll", "Xorg_libXinerama_jll", "Xorg_libXrandr_jll", "alsa_jll"]
