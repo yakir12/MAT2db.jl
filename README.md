@@ -5,7 +5,7 @@
 ] add https://github.com/yakir12/MAT2db.jl
 ```
 
-Create a `.csv` file like [this one](/example/example.csv) (e.g. with Microsoft Excel). The file must have 8 columns:
+Create a `.csv` file like [this one](/example/example.csv) (e.g. with Microsoft Excel). The file must have 10 columns:
 1. `resfile`: the full path to the `.res` file with all the pixel coordinates of all of the POIs (Points of Interest).
 2. `poi_videofile`: the full path to the video file that contains all the POIs.
 3. `poi_names`: the names of the POIs (e.g. `track`, `nest`, `dropoff`, etc.).
@@ -14,6 +14,10 @@ Create a `.csv` file like [this one](/example/example.csv) (e.g. with Microsoft 
 6. `intrinsic_start`: the time in seconds for when the moving of the checkerboard starts in the `calib_videofile` (e.g. `3`).
 7. `intrinsic_stop`: the time in seconds for when the moving of the checkerboard stops in the `calib_videofile` (e.g. `6.321`).
 8. `checker_size`: the size of the checkers in the checkerboard in centimeters (e.g. `3.9`).
+9. `nest2feeder`: in the case of a "transfer" experiment, this is the measured, actual, distance between the nest and the feeder in cm (e.g. `130.9`).
+10. `azimuth`: in the case of a "transfer" experiment, this is the azimuth between the nest and feeder in degrees (e.g. `272.9`).
+
+*Note:* `intrinsic_start`, `intrinsic_stop`, `nest2feeder`, and `azimuth` can be left empty when not relevant. `poi_videofile` and `calib_videofile` can be the exact same file. 
 
 Each row in the file (except the title row) is one run. There may be as many rows (=runs) as you like.
 
