@@ -7,25 +7,19 @@ end
 
 const Intrinsic = Pair{Float64, Float64}
 
-# _format(c::Calibration{Missing}) = string(basename(c.video), ": ", c.extrinsic)
-# _format(c::Calibration) = string(basename(c.video), ": ", c.extrinsic, ", ", c.intrinsic)
+struct ExtrinsicCalibration
+    tform
+    itform
+    ϵ::Vector{Float64}
+end
 
-# tmix=frames=15:weights="1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
-#=function getgrayimg(file, t)
-    imgraw = ffmpeg() do exe
-        read(`$exe -loglevel 8 -ss $t -i $file -vf format=gray,yadif=1,scale=sar"*"iw:ih -pix_fmt gray -vframes 1 -f image2pipe -`)
-    end
-    # return ImageIO.load(imgraw)
-    return rotr90(reinterpret(UInt8, green.(ImageMagick.load_(imgraw))))
-end=#
-
-# -vf 'yadif=1    ,,scale=sar*iw:ih
-#=function make_calibration(c::Calibration{Missing})
-    img = getgrayimg(c.video, c.extrinsic)
-    ret, corners = cv2.findChessboardCorners(img, c.checkers)
-end=#
+struct BothCalibration
+    matlab
+    ϵ::Vector{Float64}
+end
 
 push1(x) = push(x, 1)
+
 function spawnmatlab(check, extrinsic, ::Missing)
     mat"""
     warning('off','all')
@@ -43,7 +37,7 @@ function spawnmatlab(check, extrinsic, ::Missing)
     tform = PerspectiveMap() ∘ M ∘ push1
     itform = PerspectiveMap() ∘ inv(M) ∘ push1
     ϵ = round.(quantile(errors, [0, 0.5, 1]), digits = 2)
-    (; ϵ, tform, itform)
+    ExtrinsicCalibration(tform, itform, ϵ)
 end
 
 
@@ -79,7 +73,7 @@ function spawnmatlab(check, extrinsic, intrinsic)
         end
         kill = errors > 1;
     end
-    $mean_error = mean(errors);
+    $errors2 = errors
     %%
     MinCornerMetric = 0.15;
     xy = detectCheckerboardPoints(extrinsicI, 'MinCornerMetric', MinCornerMetric);
@@ -91,9 +85,8 @@ function spawnmatlab(check, extrinsic, intrinsic)
     [$R, $t] = extrinsics(xy, worldPoints, params);
     $parameters = params
     """
-    ϵ = mean_error
-    (; parameters, R, t, ϵ)
-    
+    ϵ = round.(quantile(errors2, [0, 0.5, 1]), digits = 2)
+    BothCalibration((; parameters, R, t), ϵ)
 end
 
 extract(::Missing, _, path) = missing
@@ -110,23 +103,37 @@ function extract(intrinsic::Intrinsic, video, path)
 end
 
 @memoize function build_calibration(c)
-    path = mktempdir(homedir(); prefix="calibration_", cleanup=false)
-    extrinsic = extract(c.extrinsic, c.video, path)
-    intrinsic = extract(c.intrinsic, c.video, path)
-    spawnmatlab(c.checker_size, extrinsic, intrinsic)
+    mktempdir() do path
+        extrinsic = extract(c.extrinsic, c.video, path)
+        intrinsic = extract(c.intrinsic, c.video, path)
+        spawnmatlab(c.checker_size, extrinsic, intrinsic)
+    end
 end
 
-calibrate(tform, i::Interval) = tform.(space(i))
-calibrate(tform, x) = tform(space(x))
-
-
-function calibrate_mat(matfile, xyt)
-    xy = xyt.data[:,1:2]
+calibrate(c::ExtrinsicCalibration, i::Interval) = c.tform.(space(i))
+calibrate(c::ExtrinsicCalibration, x::Singular) = c.tform(space(x))
+function calibrate(c::BothCalibration, i::POI)
+    parameters, R, t = c.matlab
+    xy = space(i)
     mat"""
-    a = load($matfile);
-    $xy = pointsToWorld(a.params, a.R, a.t, $xy);
+    $xy2 = pointsToWorld($params, $R, $t, $xy);
     """
-    P([xy xyt.data[:,3]])
+    return xy2
 end
 
 
+
+function calibrate(c::ExtrinsicCalibration, img)
+    indices = ImageTransformations.autorange(img, c.tform)
+    imgw = parent(warp(img, c.itform, indices))
+    return indices, imgw
+end
+function calibrate(c::BothCalibration, img)
+    mat"""
+    img2 = undistortImage($img, $(c.matlab.params));
+    tform = projective2d($(c.matlab.R));
+    $imgw = imwarp(img2, tform);
+    """
+    indices = axes(imgw)
+    return indices, imgw
+end

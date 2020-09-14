@@ -1,15 +1,10 @@
 module MAT2db
 
-using FileIO, FilePathsBase, CoordinateTransformations, ImageTransformations, DataStructures, Memoization, Statistics, Combinatorics, LinearAlgebra
-
-using MATLAB, Interpolations, Images
-using MAT, SparseArrays, StaticArrays, Serialization, CSV
-using AbstractPlotting, GLMakie, FFMPEG, ImageMagick, FFplay_jll, Colors, ImageIO
+using FilePathsBase, CoordinateTransformations, ImageTransformations, Memoization, Statistics, Combinatorics, LinearAlgebra
+using MATLAB
+using MAT, SparseArrays, StaticArrays, CSV
+using AbstractPlotting, GLMakie, FFMPEG, ImageMagick
 using AbstractPlotting.MakieLayout
-using GLMakie.GLFW
-using GLMakie: to_native
-using REPL.TerminalMenus
-using ContextTracking
 
 export process_csv
 
