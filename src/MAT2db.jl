@@ -9,7 +9,7 @@ using AbstractPlotting.MakieLayout
 export process_csv
 
 const pathtype = String#typeof(Path())
-const csvfile_columns = Dict(:resfile => pathtype, :poi_videofile => pathtype, :poi_names => String, :calib_videofile => pathtype, :extrinsic => Float64, :intrinsic_start => Float64, :intrinsic_stop => Float64, :checker_size => Float64, :nest2feeder => Float64, azimuth => Float64)
+const csvfile_columns = Dict(:resfile => pathtype, :poi_videofile => pathtype, :poi_names => String, :calib_videofile => pathtype, :extrinsic => Float64, :intrinsic_start => Float64, :intrinsic_stop => Float64, :checker_size => Float64, :nest2feeder => Float64, :azimuth => Float64)
 
 include.(("resfiles.jl", "assertions.jl", "calibrations.jl", "quality.jl"))
 
