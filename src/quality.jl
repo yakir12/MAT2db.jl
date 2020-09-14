@@ -1,62 +1,73 @@
 # tmix=frames=15:weights="1 1 1 1 1 1 1 1 1 1 1 1 1 1 1" 
 function getimg(file, t)
-    imgraw = ffmpeg() do exe
+    imgraw = FFMPEG.ffmpeg() do exe
         read(`$exe -loglevel 8 -ss $t -i $file -vf yadif=1,scale=sar"*"iw:ih -vframes 1 -f image2pipe -`)
     end
-    return rotr90(ImageMagick.load_(imgraw)[end:-1:1, :])
+    return rotr90(ImageMagick.load_(imgraw))
 end
 
-function plotit(v::Singular, k, title, spot, img, io)
-    title[] = k
-    spot[] = Tuple(v.xyt[1:2])
-    img[] = getimg(v.video, v.xyt[3])
-    recordframe!(io)
-end
-function plotit(v::Interval, k, title, spot, img, io)
-    title[] = k
-    for i in round.(Int, range(1, stop = length(v.xyts), length = 10))
-        # Y = size(img[], 1)
-        spot[] = Tuple(v.xyts[i][1:2])
-        img[] = getimg(v.video, v.xyts[i][3])
-        recordframe!(io)
-    end
-end
-
-function image_with_poi(pois)
+function plotrawpoi(poi::POI, file)
     scene, layout = layoutscene(0)
-    k, v = first(pois)
-    title = Node(k)
-    ax = layout[1,1] = LAxis(scene, aspect = DataAspect())
-    spot = Node(Tuple(v.xyt[1:2]))
-    img = Node(getimg(v.video, v.xyt[3]))
+    ax = layout[1,1] = LAxis(scene, aspect = DataAspect(), xlabel = "X (pixel)", ylabel = "Y (pixel)")
+    ind = Node(1)
+    img = lift(ind) do i
+        getimg(poi.video, time(poi, i))
+    end
+    spot = lift(ind) do i
+        space(poi, i)
+    end
     image!(ax, img)
     scatter!(ax, spot, color = :transparent, strokecolor = :red, strokewidth = 3)
-    text!(ax, title, position = lift(xy -> xy .- (0, 25), spot), textsize = 30, align = (:center, :top))
     tightlimits!(ax)
-    hidedecorations!(ax)
-    record(scene, "quality.mkv"; framerate = 2) do io
-        for (k,v) in pois
-            plotit(v, k, title, spot, img, io)
-        end
+    recordit(poi, file, ind, scene)
+end
+
+recordit(::Singular, file, _, scene) = AbstractPlotting.save("$file.png", scene)
+
+function recordit(poi::Interval, file, ind, scene)
+    fps = 15
+    AbstractPlotting.inline!(true)
+    record(scene, "$file.mkv", round.(Int, range(1, stop = length(poi.xyts), length = 1fps)); framerate = fps) do i
+        ind[] = i
     end
+    AbstractPlotting.inline!(false)
 end
 
-function plot_calibration(calib, pois)
-    pois2 = Dict(k => calibrate(calib.tform, v) for (k, v) in pois)
-    scene, layout = layoutscene()
-    ax = layout[1,1] = LAxis(scene, aspect = DataAspect())
-    img = getimg(pois["track"].video, 1.0)
-    wimg = warp(img, CoordinateTransformations.Transformation(calib.tform))
-    image!(ax, wimg)
-    h = heatmap!(ax, calib.x, calib.y, calib.ϵ.(calib.x, calib.y'))
-    cbar = layout[1, 2] = LColorbar(scene, h, label = "Error (mm)")
-    hs = [myplot!(ax, v) for v in values(pois)]
-    leg = layout[2, 1:2] = LLegend(scene, hs, string.(keys(pois2)))
-    leg.orientation = :horizontal
-    cbar.width = 30
+@memoize function plotcalibration(calibration::Calibration, calib, file)
+    scene, layout = layoutscene(0)
+    ax = layout[1,1] = LAxis(scene, aspect = DataAspect(), xlabel = "X (pixel)", ylabel = "Y (pixel)", title = "Raw")
+    img = getimg(calibration.video, calibration.extrinsic)
+    image!(ax, img)
     tightlimits!(ax)
-    AbstractPlotting.save("calibration.png", scene)
+    ax = layout[1,2] = LAxis(scene, aspect = DataAspect(), xlabel = "X (cm)", ylabel = "Y (cm)", title = "Calibrated")
+    indices = ImageTransformations.autorange(img, calib.tform)
+    img = parent(warp(img, calib.itform, indices))
+    image!(ax, indices..., img)
+    tightlimits!(ax)
+    layout[2,1:2] = LText(scene, "ϵ (±cm) = $(calib.ϵ)")
+    AbstractPlotting.save("$file.png", scene)
 end
 
-myplot!(ax, v::Singular) = scatter!(ax, Tuple(v.xyt[1:2]))
-myplot!(ax, v::Interval) = lines!(ax, [Tuple(xyt[1:2]) for xyt in v.xyts])
+function plotcalibratedpoi(pois, calib, file)
+    poi = Dict(k => v for (k,v) in pois if v isa Singular)
+    poic = Dict(k => calibrate(calib.tform, v) for (k, v) in poi)
+    scene, layout = layoutscene(0)
+    ax = layout[1,1] = LAxis(scene, aspect = DataAspect(), xlabel = "X (cm)", ylabel = "Y (cm)")
+    x = first(values(poi))
+    img = getimg(x.video, time(x))
+    indices = ImageTransformations.autorange(img, calib.tform)
+    img = parent(warp(img, calib.itform, indices))
+    image!(ax, indices..., img)
+    for (p1, p2) in combinations(collect(values(poic)), 2)
+        linesegments!(ax, [p1 => p2], color = :white)
+        d = norm(p2 - p1)
+        text!(ax, string(round(Int, d)), position = p1 + d/2*LinearAlgebra.normalize(p2 - p1), align = (:center, :center), textsize = 12)#, rotation = atan(reverse(p2 - p1)...))
+    end
+    for (k, v) in poic
+        scatter!(ax, v, color = :white, strokecolor = :red, strokewidth = 3)
+        text!(ax, k, position = v .- (0, 3), align = (:center, :top), textsize = 12)
+    end
+    tightlimits!(ax)
+    AbstractPlotting.save(joinpath(file, "calibrated POIs.png"), scene)
+end
+

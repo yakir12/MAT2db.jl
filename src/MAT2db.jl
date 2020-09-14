@@ -1,76 +1,70 @@
 module MAT2db
 
-using FileIO, FilePathsBase, CoordinateTransformations, ImageTransformations
+using FileIO, FilePathsBase, CoordinateTransformations, ImageTransformations, DataStructures, Memoization, Statistics, Combinatorics, LinearAlgebra
 
-using MATLAB, Interpolations
+using MATLAB, Interpolations, Images
 using MAT, SparseArrays, StaticArrays, Serialization, CSV
-using AbstractPlotting, GLMakie, FFMPEG_jll, ImageMagick, FFplay_jll, Colors, ImageIO
+using AbstractPlotting, GLMakie, FFMPEG, ImageMagick, FFplay_jll, Colors, ImageIO
 using AbstractPlotting.MakieLayout
 using GLMakie.GLFW
 using GLMakie: to_native
 using REPL.TerminalMenus
 using ContextTracking
 
+export process_csv
+
 const pathtype = String#typeof(Path())
-const DATABASE_FILE = "database"
-# const POI_NAMES = ["nest", "feeder", "dropoff", "pickup"]
-# const cv2 = PyNULL()
-const csvfile_columns = Dict(:resfile => pathtype, :poi_videofile => pathtype, :poi_names => String, :calib_videofile => pathtype, :extrinsic => Float64, :intrinsic => String, :checker_size => Float64)
-
-# function __init__()
-    # copy!(cv2, pyimport_conda("cv2", "cv2"))
-# end
-
-if !isfile(DATABASE_FILE)
-    serialize(DATABASE_FILE, nothing)
-end
+const csvfile_columns = Dict(:resfile => pathtype, :poi_videofile => pathtype, :poi_names => String, :calib_videofile => pathtype, :extrinsic => Float64, :intrinsic_start => Float64, :intrinsic_stop => Float64, :checker_size => Float64)
 
 include.(("resfiles.jl", "assertions.jl", "calibrations.jl", "quality.jl"))
 
+function process_csv(csvfile)
+    t = loadcsv(csvfile)
+    t2 = map(parserow, t)
+    for (i, x) in enumerate(t2)
+        check4errors(i, x)
+    end
+    path = mktempdir(homedir(); prefix="results_", cleanup=false)
+    mkpath(joinpath(path, "quality", "runs"))
+    mkdir(joinpath(path, "quality", "calibrations"))
+    for (i, x) in enumerate(t2)
+        process_run(x, path, string(i))
+    end
+end
+
 function loadcsv(file)
-    @assert isfile(file) "$file does not exist"
+    a_csvfile(file)
     t = CSV.File(file, normalizenames = true, types = csvfile_columns) #dateformat
-    @assert length(t) ≠ 0 "csv file has no lines"
-    for x in keys(csvfile_columns)
-        @assert x ∈ propertynames(t) "column $x is missing from the csv file"
-    end
-    for x in propertynames(t)
-        @assert haskey(csvfile_columns, x) "unkown column, $x, is in the csv file"
-    end
+    a_table(t)
     return t
 end
 
-parse_intrinsic(::Missing) = missing
-parse_intrinsic(x) = Intrinsic(parse.(Float64, split(x, ','))...)
+parse_intrinsic(::Missing, ::Missing) = missing
+parse_intrinsic(start, stop) = Intrinsic(start, stop)
+parserow(row) = merge(NamedTuple(row), (poi_names = split(row.poi_names, ','), intrinsic = parse_intrinsic(row.intrinsic_start, row.intrinsic_stop)))
 
-function process_csv(csvfile)
-    t = loadcsv(csvfile)
-    map(t) do row
-        create_run(row.resfile,
-                   row.poi_videofile,
-                   split(row.poi_names, ','),
-                   row.calib_videofile,
-                   row.extrinsic,
-                   parse_intrinsic(row.intrinsic),
-                   row.checker_size)
+function check4errors(i, x)
+    a_resfile(i, x.resfile)
+    a_poi_videofile(i, x.poi_videofile)
+    coords = resfile2coords(x.resfile, x.poi_videofile)
+    a_coords(i, coords, x.resfile)
+    a_poi_names(i, x.poi_names, length(coords))
+    calibration = Calibration(x.calib_videofile, x.extrinsic, x.intrinsic, x.checker_size)
+    a_calibration(i, calibration)
+    nothing
+end
+
+function process_run(x, path, runi)
+    mkdir(joinpath(path, "quality", "runs", runi))
+    coords = resfile2coords(x.resfile, x.poi_videofile)
+    pois = Dict(zip(x.poi_names, coords))
+    for (k, v) in pois
+        plotrawpoi(v, joinpath(path, "quality", "runs", runi,  k))
     end
-end
-
-function create_run(resfile, poi_videofile, poi_names, calib_videofile, extrinsic, intrinsic, checker_size)
-    a_resfile(resfile)
-    a_poi_videofile(poi_videofile)
-    coords = resfile2coords(resfile, poi_videofile)
-    a_coords(coords)
-    a_poi_names(poi_names, length(coords))
-    pois = Dict(zip(poi_names, coords))
-    calibration = Calibration(calib_videofile, extrinsic, intrinsic, checker_size)
-    a_calibration(calibration)
+    calibration = Calibration(x.calib_videofile, x.extrinsic, x.intrinsic, x.checker_size)
     calib = build_calibration(calibration)
-    return (; pois, calib)
+    plotcalibration(calibration, calib, joinpath(path, "quality", "calibrations", string(basename(calibration.video), calibration.extrinsic)))
+    plotcalibratedpoi(pois, calib, joinpath(path, "quality", "runs", runi))
 end
-
-
-
-
 
 end

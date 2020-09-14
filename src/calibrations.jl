@@ -25,23 +25,25 @@ end=#
     ret, corners = cv2.findChessboardCorners(img, c.checkers)
 end=#
 
-
+push1(x) = push(x, 1)
 function spawnmatlab(check, extrinsic, ::Missing)
     mat"""
     warning('off','all')
-    [imagePoints, boardSize] = detectCheckerboardPoints($extrinsic);
+    I = imread($extrinsic);
+    I = flipud(I);
+    [imagePoints, boardSize] = detectCheckerboardPoints(I);
     worldPoints = generateCheckerboardPoints(boardSize, $check);
-    tform_ = fitgeotrans(imagePoints, worldPoints, 'projective');
+    tform_ = fitgeotrans(imagePoints, worldPoints, 'affine');
     $tform = tform_.T;
     %%
     [x, y] = transformPointsForward(tform_, imagePoints(:,1), imagePoints(:,2));
-    $sz = boardSize - 1;
-    $errors = reshape(vecnorm(worldPoints - [x, y], 2, 2), $sz);
+    $errors = vecnorm(worldPoints - [x, y], 2, 2);
     """
-    x = range(0, step = check, length = Int(sz[1]))
-    y = range(0, step = check, length = Int(sz[2]))
-    ϵ = Interpolations.CubicSplineInterpolation((x, y), errors)
-    (; tform, ϵ, x, y)
+    M = LinearMap(SMatrix{3,3, Float64}(tform'))
+    tform = PerspectiveMap() ∘ M ∘ push1
+    itform = PerspectiveMap() ∘ inv(M) ∘ push1
+    ϵ = round.(quantile(errors, [0, 0.5, 1]), digits = 2)
+    (; ϵ, tform, itform)
 end
 
 
@@ -95,41 +97,28 @@ function spawnmatlab(check, extrinsic, intrinsic)
 end
 
 extract(::Missing, _, path) = missing
-function extract(ss::Float64, i, path)
-    ffmpeg() do exe
-        to = joinpath(path, "extrinsic.png")
-        run(`$exe -loglevel 8 -ss $ss -i $i -vf format=gray,yadif=1,scale=sar"*"iw:ih -pix_fmt gray -vframes 1 $to`)
-        to
-    end
+function extract(extrinsic::Float64, video, path)
+    to = joinpath(path, "extrinsic.png")
+    ffmpeg_exe(`-loglevel 8 -ss $extrinsic -i $video -vf format=gray,yadif=1,scale=sar"*"iw:ih -pix_fmt gray -vframes 1 $to`)
+    to
 end
-function extract(intrinsic::Intrinsic, i, path)
+function extract(intrinsic::Intrinsic, video, path)
     ss, t2 = intrinsic
     t = t2 - ss
-    ffmpeg() do exe
-        run(`$exe -loglevel 8 -ss $ss -i $i -t $t -r 2 -vf format=gray,yadif=1,scale=sar"*"iw:ih -pix_fmt gray $path`)
-    end
+    ffmpeg_exe(`-loglevel 8 -ss $ss -i $video -t $t -r 2 -vf format=gray,yadif=1,scale=sar"*"iw:ih -pix_fmt gray $path`)
     readdir(path, join = true)
 end
 
-function build_calibration(c)
-    mktempdir() do path
-        extrinsic = extract(c.extrinsic, c.video, path)
-        intrinsic = extract(c.intrinsic, c.video, path)
-        spawnmatlab(c.checker_size, extrinsic, intrinsic)
-    end
+@memoize function build_calibration(c)
+    path = mktempdir(homedir(); prefix="calibration_", cleanup=false)
+    extrinsic = extract(c.extrinsic, c.video, path)
+    intrinsic = extract(c.intrinsic, c.video, path)
+    spawnmatlab(c.checker_size, extrinsic, intrinsic)
 end
 
+calibrate(tform, i::Interval) = tform.(space(i))
+calibrate(tform, x) = tform(space(x))
 
-
-
-
-calibrate(tform, s::Singular) = calibrate(tform, s.xyt)
-calibrate(tform, s::Interval) = calibrate.(Ref(tform), s.xyts)
-function calibrate(tform, xyt::SpaceTime)
-    xy2 = [xyt[1] xyt[2] 1.0]*tform
-    xy3 = xy2[1:2]/xy2[3]
-    SpaceTime(xy3..., xyt[3])
-end
 
 function calibrate_mat(matfile, xyt)
     xy = xyt.data[:,1:2]

@@ -1,2 +1,2 @@
-resfile, poi_videofile,poi_names,calib_videofile,extrinsic,intrinsic,checker_corners,checker_size
-/home/yakir/MAT2db.jl/example/resfile.res,/home/yakir/tmp/tmp/Beetle unknown 20141109.MPG,"nest,initialfeeder,feeder,track",/home/yakir/tmp/tmp/Beetle unknown 20141109.MPG,42.402,"30.996,46.775","10,9",39
+resfile, poi_videofile,poi_names,calib_videofile,extrinsic,intrinsic_start,intrinsic_stop,checker_size
+20181121_02_left.res,20181121_02_left.mov,"nest,initialfeeder,feeder,track,pellet",20181121_02_left.mov,582.835,,,3.9
