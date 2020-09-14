@@ -1,2 +1,2 @@
-resfile, poi_videofile,poi_names,calib_videofile,extrinsic,intrinsic_start,intrinsic_stop,checker_size
+resfile,poi_videofile,poi_names,calib_videofile,extrinsic,intrinsic_start,intrinsic_stop,checker_size
 20181121_02_left.res,20181121_02_left.mov,"nest,initialfeeder,feeder,track,pellet",20181121_02_left.mov,582.835,,,3.9
