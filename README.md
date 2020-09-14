@@ -13,7 +13,7 @@ Ceate a `.csv` file like [this one](/example/example.csv) (e.g. with Microsoft E
 5. `extrinsic`: the time in seconds for when the checkboard is flat on the ground in the `calib_videofile` (e.g. `2.5`).
 6. `intrinsic_start`: the time in seconds for when the moving of the checkboard starts in the `calib_videofile` (e.g. `3`).
 7. `intrinsic_stop`: the time in seconds for when the moving of the checkboard stops in the `calib_videofile` (e.g. `6.321`).
-8. `checker_size`: the size of the checkers in the checkerb in centimeters (e.g. `3.9`).
+8. `checker_size`: the size of the checkers in the checkboard in centimeters (e.g. `3.9`).
 
 Each row in the file (except the title row) is one run. There may be as many rows (=runs) as you like.
 
