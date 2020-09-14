@@ -9,7 +9,7 @@ using AbstractPlotting.MakieLayout
 export process_csv
 
 const pathtype = String#typeof(Path())
-const csvfile_columns = Dict(:resfile => pathtype, :poi_videofile => pathtype, :poi_names => String, :calib_videofile => pathtype, :extrinsic => Float64, :intrinsic_start => Float64, :intrinsic_stop => Float64, :checker_size => Float64)
+const csvfile_columns = Dict(:resfile => pathtype, :poi_videofile => pathtype, :poi_names => String, :calib_videofile => pathtype, :extrinsic => Float64, :intrinsic_start => Float64, :intrinsic_stop => Float64, :checker_size => Float64, :nest2feeder => Float64, azimuth => Float64)
 
 include.(("resfiles.jl", "assertions.jl", "calibrations.jl", "quality.jl"))
 
@@ -39,6 +39,7 @@ parse_intrinsic(start, stop) = Intrinsic(start, stop)
 parserow(row) = merge(NamedTuple(row), (poi_names = split(row.poi_names, ','), intrinsic = parse_intrinsic(row.intrinsic_start, row.intrinsic_stop)))
 
 function check4errors(i, x)
+    a_nest2feeder(i, x.nest2feeder, x.azimuth)
     a_resfile(i, x.resfile)
     a_poi_videofile(i, x.poi_videofile)
     coords = resfile2coords(x.resfile, x.poi_videofile)

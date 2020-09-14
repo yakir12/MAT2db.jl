@@ -43,3 +43,11 @@ function a_intrinsic(i, intrinsic, duration)
     @assert issorted(intrinsic) "the intrinsic starting time in run #$i cannot come after the ending time" 
 end
 a_intrinsic(i, ::Missing, _) = nothing
+
+function a_nest2feeder(i, nest2feeder::Float64, azimuth::Float64) 
+    @assert nest2feeder > 0 "nest to feeder distance must be larger than zero in run #$i"
+    @assert 0 < azimuth < 360 "azimuth must be between 0° and 360° in run #$i"
+end
+a_nest2feeder(_, ::Missing, ::Missing) = nothing
+a_nest2feeder(i, ::Missing, ::Float64) = throw(AssertionError("nest to feeder distance is missing in run #$i"))
+a_nest2feeder(i, ::Float64, ::Missing) = throw(AssertionError("azimuth is missing in run #$i"))
