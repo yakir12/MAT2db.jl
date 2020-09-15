@@ -19,11 +19,13 @@ function process_csv(csvfile)
     for (i, x) in enumerate(t2)
         check4errors(i, x)
     end
-    path = mktempdir(homedir(); prefix="results_", cleanup=false)
+    @info "found no errors in the data"
+    path = mktempdir(pwd(); prefix="results_", cleanup=false)
     mkpath(joinpath(path, "quality", "runs"))
     mkdir(joinpath(path, "quality", "calibrations"))
     for (i, x) in enumerate(t2)
         process_run(x, path, string(i))
+        @info "processed run #$i"
     end
 end
 

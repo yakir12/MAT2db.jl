@@ -104,11 +104,10 @@ function extract(intrinsic::Intrinsic, video, path)
 end
 
 @memoize function build_calibration(c)
-    mktempdir() do path
+    path = mktempdir()
         extrinsic = extract(c.extrinsic, c.video, path)
         intrinsic = extract(c.intrinsic, c.video, path)
         spawnmatlab(c.checker_size, extrinsic, intrinsic)
-    end
 end
 
 calibrate(c::ExtrinsicCalibration, i::Interval) = c.tform.(space(i))
