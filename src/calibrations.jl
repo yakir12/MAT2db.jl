@@ -98,7 +98,8 @@ end
 function extract(intrinsic::Intrinsic, video, path)
     ss, t2 = intrinsic
     t = t2 - ss
-    ffmpeg_exe(`-loglevel 8 -ss $ss -i $video -t $t -r 2 -vf format=gray,yadif=1,scale=sar"*"iw:ih -pix_fmt gray $path`)
+    files = joinpath(path, "intrinsic%03d.png")
+    ffmpeg_exe(`-loglevel 8 -ss $ss -i $video -t $t -r 2 -vf format=gray,yadif=1,scale=sar"*"iw:ih -pix_fmt gray $files`)
     readdir(path, join = true)
 end
 
