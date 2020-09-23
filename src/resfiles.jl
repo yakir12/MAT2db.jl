@@ -1,50 +1,21 @@
 const Space = SVector{2, Float64}
-space(x::Space) = x
-time(::Space) = error("no time in space")
+# space(x::Space) = x
+# time(::Space) = error("no time in space")
 
-struct SpaceTime
-    xy::Space
-    t::Float64
-end
-SpaceTime(x,y, t) = SpaceTime(Space(x, y), t)
-space(x::SpaceTime) = x.xy
-time(x::SpaceTime) = x.t
-
-abstract type POI end
-
-struct Singular <: POI
-    xyt::SpaceTime
+struct POI
+    xy::Vector{Space}
+    t::Vector{Float64}
     video::String
 end
-Singular(x, y, t, v) = Singular(SpaceTime(x, y, t), v)
-space(x::Singular) = space(x.xyt)
-time(x::Singular) = time(x.xyt)
-space(x::Singular, _) = space(x)
-time(x::Singular, _) = time(x)
-
-# struct Vertices <: POI
-#     xys::Vector{Space}
-#     t::Float64
-#     video::String
-# end
-# Vertices(x, y, t, v) = Vertices(Space.(x, y), t, v)
-# space(x::Vertices) = x.xys
-# time(x::Vertices) = x.t
-
-struct Interval <: POI
-    xyts::Vector{SpaceTime}
-    video::String
-end
-Interval(x, y, t, v) = Interval(SpaceTime.(x, y, t), v)
-space(x::Interval) = space.(x.xyts)
-time(x::Interval) = time.(x.xyts)
-space(x::Interval, i) = space(x.xyts[i])
-time(x::Interval, i) = time(x.xyts[i])
-
+POI(x, y, t, v) = POI(Space.(x, y), t, v)
+space(x::POI) = length(x.xy) == 1 ? only(x.xy) : x.xy
+time(x::POI) = length(x.t) == 1 ? only(x.t) : x.t
+space(x::POI, i) = x.xy[i]
+time(x::POI, i) = x.t[i]
 
 function resfile2coords(resfile, videofile)
     matopen(resfile) do io
-        height = read(io, "status")["vidHeight"]
+        # height = read(io, "status")["vidHeight"]
         xdata = read(io, "xdata")
         fr = read(io, "status")["FrameRate"]
         rows = rowvals(xdata)
@@ -53,15 +24,11 @@ function resfile2coords(resfile, videofile)
         n = size(xdata, 2)
         coords = POI[]
         for j = 1:n
-            is = nzrange(xdata, j)
-            isempty(is) && continue
-            a = if length(is) == 1
-                i = only(is)
-                Singular(xvals[i], height - yvals[i], rows[i]/fr, videofile)
-            else
-                Interval(xvals[is], height .- yvals[is], rows[is]/fr, videofile)
+            i = nzrange(xdata, j)
+            if !isempty(i)
+                poi = POI(xvals[i], yvals[i], rows[i]/fr, videofile)
+                push!(coords, poi)
             end
-            push!(coords, a)
         end
         return coords
     end

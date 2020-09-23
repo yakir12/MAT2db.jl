@@ -24,10 +24,11 @@ function spawnmatlab(check, extrinsic, ::Missing)
     mat"""
     warning('off','all')
     I = imread($extrinsic);
-    I = flipud(I);
     [imagePoints, boardSize] = detectCheckerboardPoints(I);
     worldPoints = generateCheckerboardPoints(boardSize, $check);
-    tform_ = fitgeotrans(imagePoints, worldPoints, 'affine');
+    tform_ = fitgeotrans(imagePoints, worldPoints, 'projective');
+    $xy1 = imagePoints;
+    $xy2 = worldPoints;
     $tform = tform_.T;
     %%
     [x, y] = transformPointsForward(tform_, imagePoints(:,1), imagePoints(:,2));
@@ -110,23 +111,33 @@ end
         spawnmatlab(c.checker_size, extrinsic, intrinsic)
 end
 
-calibrate(c::ExtrinsicCalibration, i::Interval) = c.tform.(space(i))
-calibrate(c::ExtrinsicCalibration, x::Singular) = c.tform(space(x))
-function calibrate(c::BothCalibration, i::POI)
+calibrate!(poi, c) = map!(c, poi.xy, poi.xy)
+calibrate!(poi, c::ExtrinsicCalibration) = map!(c.tform, poi.xy, poi.xy)
+
+function calibrate!(poi, c::BothCalibration)
     parameters, R, t = c.matlab
-    xy = space(i)
+    xy = space(poi)
     mat"""
     $xy2 = pointsToWorld($params, $R, $t, $xy);
     """
-    return xy2
+    poi.xy .= xy2
 end
 
-
+# calibrate(c::ExtrinsicCalibration, i::Interval) = c.tform.(space(i))
+# calibrate(c::ExtrinsicCalibration, x::Singular) = c.tform(space(x))
+# function calibrate(c::BothCalibration, i::POI)
+#     parameters, R, t = c.matlab
+#     xy = space(i)
+#     mat"""
+#     $xy2 = pointsToWorld($params, $R, $t, $xy);
+#     """
+#     return xy2
+# end
 
 function calibrate(c::ExtrinsicCalibration, img)
     indices = ImageTransformations.autorange(img, c.tform)
-    imgw = parent(warp(img, c.itform, indices))
-    return indices, imgw
+    imgw = warp(img, c.itform, indices)
+    return indices, parent(imgw)
 end
 function calibrate(c::BothCalibration, img)
     mat"""
@@ -137,3 +148,62 @@ function calibrate(c::BothCalibration, img)
     indices = axes(imgw)
     return indices, imgw
 end
+
+build_extra_calibration(c::NTuple{0}, e::NTuple{0}) = Translation(Space(0, 0))
+build_extra_calibration(c::NTuple{1}, e::NTuple{1}) = Translation(Space(0, 0))
+function build_extra_calibration(c::NTuple{2}, e::NTuple{2})
+    s = norm(diff(e))/norm(diff(c))
+    LinearMap(Diagonal(SVector(s, s)))
+end
+build_extra_calibration(c::NTuple{3}, e::NTuple{3}) = createAffineMap(c, e)
+function build_extra_calibration(c::NTuple{N}, e::NTuple{N}) where N 
+    @warn "didn't implement an extra calibration for more than 3 expected locations. Using the first 3 only."
+    createAffineMap(c[1:3], e[1:3])
+end
+
+# function build_extra_calibration(c2e)
+#     n = length(c2e)
+#     if n ≤ 1
+#         Translation(Space(0, 0))
+#     elseif n == 2
+#         s = norm(diff(last.(c2e)))/norm(diff(first.(c2e)))
+#         LinearMap(Diagonal(SVector(s, s)))
+#     elseif n == 3
+#         createAffineMap(first.(c2e), last.(c2e))
+#     else
+#         @warn "didn't implement an extra calibration for more than 3 expected locations. Using the first 3 only."
+#         createAffineMap(first.(c2e[1:3]), last.(c2e[1:3]))
+#     end
+# end
+
+function createAffineMap(poic, expected)
+    X = ones(3, 3)
+    Y = Matrix{Float64}(undef, 3, 2)
+    for (i, (c, e)) in enumerate(zip(poic, expected))
+        X[i, 1:2] .= c
+        Y[i, :] .= e
+    end
+    c = (X \ Y)'
+    A = c[:, 1:2]
+    b = c[:, 3]
+    AffineMap(SMatrix{2,2,Float64}(A), SVector{2, Float64}(b))
+end
+
+
+# extracalib(calib, _, poi) = calib
+# extracalib(calib::ExtrinsicCalibration, ::Missing, poi) = calib
+# function extracalib(calib::ExtrinsicCalibration, expected_locations, poi)
+#     # Space = SVector{2, Float64}
+#     # d = Vector{Pair{Space, Space}}(undef, 3)
+#     # for (i, kxy) in enumerate(split(expected_locations, ','))
+#     #     _k, _x, _y = filter(!isempty, split(kxy, ' '))
+#     #     k = strip(_k)
+#     #     x = parse(Float64, strip(_x))
+#     #     y = parse(Float64, strip(_y))
+#     #     d[i] = Space(x, y) => space(poi[k]) 
+#     # end
+#     # itform = AffineMap(d)
+#     tform = Translation(SVector{2, Float64}(100,0))
+#     ExtrinsicCalibration(calib.tform ∘ tform, calib.itform, calib.ϵ)
+# end
+

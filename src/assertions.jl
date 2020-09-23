@@ -16,15 +16,26 @@ function a_poi_videofile(i, poi_videofile)
     @assert lowercase.(extension(Path(poi_videofile))) ∈ ("mp4", "avi", "mts", "mov") "unidentified video format for POI video file in run #$i"
 end
 
-function a_coords(i, coords, resfile)
-    @assert !isempty(coords) "res file in run #$i was empty"
-    @assert any(x -> isa(x, Interval), coords) "res file in run #$i missing track"
+function a_coords(i, resfile, npois)
+    matopen(resfile) do io
+        for field in ("xdata", "ydata", "status")
+            @assert MAT.exists(io, field) "resfile missing $field"
+        end
+        @assert haskey(read(io, "status"), "FrameRate") "resfile missing frame rate"
+        xdata = read(io, "xdata")
+        n = size(xdata, 2)
+        npoints = [length(nzrange(xdata, j)) for j in 1:n]
+        nmax = maximum(npoints)
+        @assert nmax > 5 "res file in run #$i missing a POI with more than 5 data points (e.g. a track)"
+        n = count(!iszero, npoints)
+        @assert n ≠ 0 "res file is empty"
+        @assert npois == n "number of POIs, $npois, doesn't match the number of res columns, $n, in run #$i"
+    end
 end
 
-function a_poi_names(i, poi_names, n)
+function a_poi_names(i, poi_names)
+    @assert all(x -> !occursin(' ', x), poi_names) "POI name/s contains space/s in run #$i"
     @assert allunique(poi_names) "POI names must be unique in run #$i"
-    npois = length(poi_names)
-    @assert npois == n "number of POIs, $npois, doesn't match the number of res columns, $n, in run #$i"
 end
 
 function a_calibration(i, c)
