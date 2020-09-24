@@ -36,22 +36,26 @@ and then run the main function:
 process_csv("this is the full path to the your csv file.csv")
 ```
 
-This will first check for any errors in your files (read any error messages to discover what went wrong). If no errors were detected, it will save quality reports on all of the calibrations and runs in a `results` folder in your home directory:
+This will first check for any errors in your files (read any error messages to discover what went wrong). If no errors were detected, it will save quality reports on all of the calibrations and runs in a `data` folder in where you ran the code from:
 ```
-quality
-├── calibrations
-│   └── 20181121_02_left.mov582.835.png
-└── runs
-    └── 1
-        ├── calibrated POIs.png
-        ├── feeder.png
-        ├── initialfeeder.png
-        ├── nest.png
-        ├── pellet.png
-        └── track.mkv
+data
+├── quality
+│   ├── calibrations
+│   │   └── 20181121_02_left.mov582.835.png
+│   └── runs
+│       └── 1
+│           ├── calibrated POIs.png
+│           ├── feeder.png
+│           ├── initialfeeder.png
+│           ├── nest.png
+│           ├── pellet.png
+│           └── track.mkv
+└── results
+    └── 1.png
 ```
-The calibration image shows how the calibrated checkerboard image compares to the raw one as well as the minimum, mean, and maximum calibration errors in cm.
-In each run folder there are the raw POIs and their pixel coordinates (track is a movie while the others are images), as well as the calibrated POIs and their relative distances to each other in cm.
+In the quality folder: The calibration image shows how the calibrated checkerboard image compares to the raw one as well as the minimum, mean, and maximum calibration errors in cm.
+In each run folder there are the raw POIs and their pixel coordinates (track is a movie while the others are images), as well as the calibrated POIs and their relative distances to each other in cm (this includes the calibrated and corrected representations).
+In the results folder: Each run has one result image showing the track and POIs oriented so that the nest is at origo and the feeder is directly below it. 
 
 ## To check for
 In terms of the calibrations:

@@ -55,12 +55,12 @@ function check4errors(i, x)
     nothing
 end
 
-function process_run(x, path, runi)
-    # @memoize Dict function process_run(x, path, runi)
+# function process_run(x, path, runi)
+@memoize Dict function process_run(x, path, runi)
     coords = resfile2coords(x.resfile, x.poi_videofile)
     pois = Dict(zip(x.poi_names, coords))
     for (k, v) in pois
-        # plotrawpoi(v, joinpath(path, "quality", "runs", runi,  String(k)))
+        plotrawpoi(v, joinpath(path, "quality", "runs", runi,  String(k)))
     end
     calibration = Calibration(x.calib_videofile, x.extrinsic, x.intrinsic, x.checker_size)
     calib = build_calibration(calibration)
