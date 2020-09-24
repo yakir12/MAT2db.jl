@@ -16,15 +16,17 @@ legendmarkers = OrderedDict(
 function plotrun(x)
     scene, layout = layoutscene()
     ax = layout[1,1] = LAxis(scene, aspect = DataAspect(), xlabel = "X (cm)", ylabel = "Y (cm)")#, yreversed = true)
+    h = OrderedDict()
     for (k,v) in legendlines
-        lines!(ax, getproperty(x, k); v...)
+        h[k] = lines!(ax, getproperty(x, k); v...)
     end
     for (k,v) in legendmarkers
         xy = getproperty(x, k)
         if !ismissing(xy) && !isempty(xy)
-            scatter!(ax, xy; v...)
+            h[k] = scatter!(ax, xy; v...)
         end
     end
+    layout[0,1] = LLegend(scene, collect(values(h)), string.(keys(h)), orientation = :vertical, nbanks = 5, tellheight = true, height = Auto(), groupgap = 30);
     scene
 end
 
