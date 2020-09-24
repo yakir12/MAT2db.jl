@@ -19,7 +19,7 @@ Create a `.csv` file like [this one](/example/example.csv) (e.g. with Microsoft 
 10. `azimuth`: in the case of a "transfer" experiment, this is the azimuth between the nest and feeder in degrees (e.g. `272.9`).
 11. `extra_correction`: when the expected locations of some of the POIs are available (see point #3 above), it is possible to correct the coordinates so that POIs are *exactly* where they are expected to be. This boolean column dictates if to apply (`true`) or not to apply (`false`) this extra correction.
 
-###Notes
+### Notes
 1. `intrinsic_start`, `intrinsic_stop`, `nest2feeder`, and `azimuth` can be left empty when not relevant. 
 2. `poi_videofile` and `calib_videofile` can be the exact same file. 
 3. The expected locations in `poi_names` should only refer to POIs that you have an actual location for (e.g. a POI that has a columnin the `res` file). So for instance, it is not ok to specify `nest 0 0` for a transfer experiment.
