@@ -34,8 +34,9 @@ function a_coords(i, resfile, npois)
 end
 
 function a_poi_names(i, poi_names)
-    @assert all(x -> !occursin(' ', x), poi_names) "POI name/s contains space/s in run #$i"
+    @assert all(x -> !occursin(' ', String(x)), poi_names) "POI name/s contains space/s in run #$i"
     @assert allunique(poi_names) "POI names must be unique in run #$i"
+    @assert :track ∈ poi_names "a track POI is missing in run #$i"
 end
 
 function a_calibration(i, c)
@@ -55,10 +56,31 @@ function a_intrinsic(i, intrinsic, duration)
 end
 a_intrinsic(i, ::Missing, _) = nothing
 
-function a_nest2feeder(i, nest2feeder::Float64, azimuth::Float64) 
+function a_nest2feeder(i, nest2feeder, azimuth, expected_locations) 
+    _a_nest2feeder1(i, nest2feeder, expected_locations)
+    _a_nest2feeder2(i, nest2feeder, azimuth)
+end
+
+function _a_nest2feeder1(i, nest2feeder, expected_locations)
+    expected_nest2feeder = _get_expected_nest2feeder(expected_locations)
+    a_expected_nest2feeder(i, expected_nest2feeder, nest2feeder)
+end
+
+__getfeeder(x) = get(x, :initialfeeder, get(x, :pickup, get(x, :feeder, missing)))
+_get_expected_nest2feeder(x) = _get_expected_nest2feeder(get(x, :nest, missing), __getfeeder(x))
+_get_expected_nest2feeder(nest, feeder) = norm(nest - feeder)
+_get_expected_nest2feeder(::Missing, feeder) = missing
+_get_expected_nest2feeder(nest, ::Missing) = missing
+_get_expected_nest2feeder(::Missing, ::Missing) = missing
+
+a_expected_nest2feeder(i, expected_nest2feeder::Float64, ::Missing) = throw(AssertionError("nest2feeder is missing, even though the expected distance should be $expected_nest2feeder in run #$i"))
+a_expected_nest2feeder(i, ::Missing, _) = nothing
+a_expected_nest2feeder(i, expected_nest2feeder, nest2feeder) = @assert expected_nest2feeder ≈ nest2feeder "nest2feeder, $nest2feeder, is not equal to the distance between the expected nest and feederlocations, $expected_nest2feeder, in run #$i"
+
+function _a_nest2feeder2(i, nest2feeder::Float64, azimuth::Float64)
     @assert nest2feeder > 0 "nest to feeder distance must be larger than zero in run #$i"
     @assert 0 < azimuth < 360 "azimuth must be between 0° and 360° in run #$i"
 end
-a_nest2feeder(_, ::Missing, ::Missing) = nothing
-a_nest2feeder(i, ::Missing, ::Float64) = throw(AssertionError("nest to feeder distance is missing in run #$i"))
-a_nest2feeder(i, ::Float64, ::Missing) = throw(AssertionError("azimuth is missing in run #$i"))
+_a_nest2feeder2(_, x, ::Missing) = nothing
+_a_nest2feeder2(i, ::Missing, ::Float64) = throw(AssertionError("nest to feeder distance is missing in run #$i"))
+

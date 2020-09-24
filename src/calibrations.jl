@@ -18,7 +18,7 @@ struct BothCalibration
     ϵ::Vector{Float64}
 end
 
-push1(x) = push(x, 1)
+push1(x) = push(x, 1.0)
 
 function spawnmatlab(check, extrinsic, ::Missing)
     mat"""
@@ -105,14 +105,15 @@ function extract(intrinsic::Intrinsic, video, path)
 end
 
 @memoize function build_calibration(c)
-    path = mktempdir()
+    mktempdir() do path
         extrinsic = extract(c.extrinsic, c.video, path)
         intrinsic = extract(c.intrinsic, c.video, path)
         spawnmatlab(c.checker_size, extrinsic, intrinsic)
+    end
 end
 
-calibrate!(poi, c) = map!(c, poi.xy, poi.xy)
-calibrate!(poi, c::ExtrinsicCalibration) = map!(c.tform, poi.xy, poi.xy)
+calibrate!(poi, c) = map!(c, space(poi), space(poi))
+calibrate!(poi, c::ExtrinsicCalibration) = map!(c.tform, space(poi), space(poi))
 
 function calibrate!(poi, c::BothCalibration)
     parameters, R, t = c.matlab
@@ -120,7 +121,7 @@ function calibrate!(poi, c::BothCalibration)
     mat"""
     $xy2 = pointsToWorld($params, $R, $t, $xy);
     """
-    poi.xy .= xy2
+    space(poi) .= xy2
 end
 
 # calibrate(c::ExtrinsicCalibration, i::Interval) = c.tform.(space(i))
@@ -149,8 +150,8 @@ function calibrate(c::BothCalibration, img)
     return indices, imgw
 end
 
-build_extra_calibration(c::NTuple{0}, e::NTuple{0}) = Translation(Space(0, 0))
-build_extra_calibration(c::NTuple{1}, e::NTuple{1}) = Translation(Space(0, 0))
+build_extra_calibration(c::NTuple{0}, e::NTuple{0}) = IdentityTransformation()
+build_extra_calibration(c::NTuple{1}, e::NTuple{1}) = IdentityTransformation()
 function build_extra_calibration(c::NTuple{2}, e::NTuple{2})
     s = norm(diff(e))/norm(diff(c))
     LinearMap(Diagonal(SVector(s, s)))

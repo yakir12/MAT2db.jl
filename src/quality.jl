@@ -20,7 +20,7 @@ function plotrawpoi(poi::POI, file)
     image!(ax, img)
     scatter!(ax, spot, color = :transparent, strokecolor = :red, strokewidth = 3)
     tightlimits!(ax)
-    if space(poi) isa Space
+    if length(time(poi)) == 1
         recordit(file, scene)
     else
         recordit(poi, file, ind, scene)
@@ -32,7 +32,7 @@ recordit(file, scene) = AbstractPlotting.save("$file.png", scene)
 function recordit(poi, file, ind, scene)
     fps = 15
     AbstractPlotting.inline!(true)
-    record(scene, "$file.mkv", round.(Int, range(1, stop = length(poi.xy), length = 1fps)); framerate = fps) do i
+    record(scene, "$file.mkv", round.(Int, range(1, stop = length(time(poi)), length = 1fps)); framerate = fps) do i
         ind[] = i
     end
     AbstractPlotting.inline!(false)
@@ -63,15 +63,15 @@ end
 
 function _plotpoic(ax, indices, img, poic, expected_locations)
     image!(ax, indices..., img)
-    ps = [Pair(p1, p2) for (p1, p2) in combinations(space.(values(poic)), 2)]
+    ps = [Pair(only(p1), only(p2)) for (p1, p2) in combinations(space.(values(poic)), 2)]
     lps = _label_position_distances.(ps)
     textlayer = textlayer!(ax)
     annotations!(textlayer, ax, first.(lps), last.(lps), color = :yellow, align = (:center, :center), textsize = 12)#, rotation = π/6)
     linesegments!(ax, ps, color = :white)
     opts = (marker = '+', color = :red, strokewidth = 0, markersize = 6)
-    scatter!(ax, space.(values(poic)); opts..., color = :green)
-    labels = collect(keys(poic))
-    pos = [Point(space(xy) .- (0, 5)) for xy in values(poic)]
+    scatter!(ax, only.(space.(values(poic))); opts..., color = :green)
+    labels = String.(keys(poic))
+    pos = [Point(only(space(xy)) .- (0, 5)) for xy in values(poic)]
     annotations!(textlayer, ax, labels, pos, color = :yellow, align = (:center, :bottom), textsize = 12)#, rotation = π/6)
     if !isempty(expected_locations)
         scatter!(ax, Point.(values(expected_locations)); opts...)
@@ -87,7 +87,7 @@ function plotcalibratedpoi(pois, calib, file, expected_locations, calib2)
     ax1 = layout[1,1] = LAxis(scene, aspect = DataAspect(), yreversed = true, xlabel = "X (cm)", ylabel = "Y (cm)", title = "Calibrated", backgroundcolor = :black)
     _plotpoic(ax1, indices, imgw, pois, expected_locations)
     for v in values(pois)
-        map!(calib2, v.xy, v.xy)
+        map!(calib2, space(v), space(v))
     end
     imgw = warp(OffsetArray(imgw, indices...), inv(calib2))
     indices = UnitRange.(axes(imgw))
@@ -95,10 +95,10 @@ function plotcalibratedpoi(pois, calib, file, expected_locations, calib2)
     ax2 = layout[1,2] = LAxis(scene, aspect = DataAspect(), yreversed = true, xlabel = "X (cm)", ylabel = "Y (cm)", title = "& corrected", backgroundcolor = :black)
     _plotpoic(ax2, indices, imgw, pois, expected_locations)
     linkaxes!(ax1, ax2)
-    mx = minimum(first.(space.(values(pois)))) - 100
-    Mx = maximum(first.(space.(values(pois)))) + 100
-    my = minimum(last.(space.(values(pois)))) - 100
-    My = maximum(last.(space.(values(pois)))) + 100
+    mx = minimum(first.(only.(space.(values(pois))))) - 100
+    Mx = maximum(first.(only.(space.(values(pois))))) + 100
+    my = minimum(last.(only.(space.(values(pois))))) - 100
+    My = maximum(last.(only.(space.(values(pois))))) + 100
     limits!(ax1, mx, Mx, My, my)
     hideydecorations!(ax2)
     hidexdecorations!(ax1, ticklabels = false, ticks = false, grid = false)

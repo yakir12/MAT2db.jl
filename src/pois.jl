@@ -1,16 +1,18 @@
-
 firstpass(str) = match(r"^\s*(\w+)\s+(-?\d+)\s+(-?\d+)\s*$", str)
-secondpass(::Nothing, str) = strip(str), nothing
+
+secondpass(::Nothing, str) = Symbol(strip(str)), nothing
 function secondpass(m, _) 
     poi, _x, _y = m.captures
     x = parse(Float64, _x)
     y = parse(Float64, _y)
-    return poi, Space(x, y)
+    return Symbol(poi), Space(x, y)
 end
+
 parsepoi(str) = secondpass(firstpass(str), str)
+
 function parsepois(row) 
-    poi_names = String[]
-    expected_locations = Dict{String, Space}()
+    poi_names = Symbol[]
+    expected_locations = Dict{Symbol, Space}()
     for poi in split(row, ',')
         poi_name, xy = parsepoi(poi) 
         push!(poi_names, poi_name)
@@ -23,7 +25,7 @@ end
 
 function adjust_expected(e2c)
     n = length(e2c)
-    y = Dict{String, Space}()
+    y = Dict{Symbol, Space}()
     if n ≤ 1
         for (k, v) in e2c
             y[k] = last(v)
@@ -50,3 +52,10 @@ function adjust_expected(e2c)
     return y
 end
 
+function flipy!(pois)
+    ymax = maximum(maximum(last, space(v)) for v in values(pois))
+    for v in values(pois), row in LazyRows(v.xyt)
+        x2, y = row.xy
+        row.xy = Space(x2, ymax - y)
+    end
+end
