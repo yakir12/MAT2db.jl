@@ -43,8 +43,7 @@ getnest2feeder(x, metadata) = haskey(x, :nestbefore) ? norm(x[:nestbefore] - x[:
 
 function getdata(x, metadata)
     nest = get(x, :nest, missing)
-    tp = get(x, :turning_point, missing)
-    track = Track(x[:track], tp)
+    track = Track(x[:track], metadata[:turning_point])
     _pellet = get(x, :pellet, StructVector{SpaceTime}(undef, 0))
     pellet = _pellet.xy
     dropoff = getdropoff(x)

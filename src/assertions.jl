@@ -84,3 +84,8 @@ end
 _a_nest2feeder2(_, x, ::Missing) = nothing
 _a_nest2feeder2(i, ::Missing, ::Float64) = throw(AssertionError("nest to feeder distance is missing in run #$i"))
 
+a_turning_point(i, _, ::Missing) = nothing
+function a_turning_point(i, poi_videofile, t)
+    duration = get_duration(poi_videofile)
+    @assert 0 ≤ t ≤ duration "turning point time stamp in run #$i is not in the video"
+end

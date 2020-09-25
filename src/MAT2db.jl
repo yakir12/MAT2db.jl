@@ -9,7 +9,7 @@ using AbstractPlotting.MakieLayout
 export process_csv
 
 const pathtype = String#typeof(Path())
-const csvfile_columns = Dict(:resfile => pathtype, :poi_videofile => pathtype, :poi_names => String, :calib_videofile => pathtype, :extrinsic => Float64, :intrinsic_start => Float64, :intrinsic_stop => Float64, :checker_size => Float64, :nest2feeder => Float64, :azimuth => Float64, :extra_correction => Bool)
+const csvfile_columns = Dict(:resfile => pathtype, :poi_videofile => pathtype, :poi_names => String, :calib_videofile => pathtype, :extrinsic => Float64, :intrinsic_start => Float64, :intrinsic_stop => Float64, :checker_size => Float64, :nest2feeder => Float64, :azimuth => Float64, :extra_correction => Bool, :turning_point => Float64)
 
 include.(("resfiles.jl", "assertions.jl", "calibrations.jl", "quality.jl", "pois.jl", "tracks.jl", "common.jl", "plots.jl"))
 
@@ -52,6 +52,7 @@ function check4errors(i, x)
     a_coords(i, x.resfile, length(x.poi_names))
     calibration = Calibration(x.calib_videofile, x.extrinsic, x.intrinsic, x.checker_size)
     a_calibration(i, calibration)
+    a_turning_point(i, x.poi_videofile, x.turning_point)
     nothing
 end
 
@@ -86,7 +87,7 @@ end
         coords[:expected_dropoff] = x.expected_locations[:dropoff]
     end
 
-    metadata = Dict(:nest2feeder => x.nest2feeder, :azimuth => x.azimuth)
+    metadata = Dict(:nest2feeder => x.nest2feeder, :azimuth => x.azimuth, :turning_point => x.turning_point)
 
     z = common(coords, metadata)
     s = Standardized(z)

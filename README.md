@@ -18,6 +18,7 @@ Create a `.csv` file like [this one](/example/example.csv) (e.g. with Microsoft 
 9. `nest2feeder`: in the case of a "transfer" experiment, this is the measured, actual, distance between the nest and the feeder in cm (e.g. `130.9`).
 10. `azimuth`: in the case of a "transfer" experiment, this is the azimuth between the nest and feeder in degrees (e.g. `272.9`).
 11. `extra_correction`: when the expected locations of some of the POIs are available (see point #3 above), it is possible to correct the coordinates so that POIs are *exactly* where they are expected to be. This boolean column dictates if to apply (`true`) or not to apply (`false`) this extra correction.
+12. `turning_point`: if you want to overide the automatic detection of the turning point, specify the time stamp in the video (i.e. the `poi_videofile`) when the animal turns, otherwise leave empty.
 
 ### Notes
 1. `intrinsic_start`, `intrinsic_stop`, `nest2feeder`, and `azimuth` can be left empty when not relevant. 
