@@ -1,6 +1,6 @@
 module MAT2db
 
-using FilePathsBase, CoordinateTransformations, ImageTransformations, Memoization, Statistics, Combinatorics, LinearAlgebra, OffsetArrays, StructArrays, StatsBase, Dierckx, AngleBetweenVectors, DataStructures, Missings
+using FilePathsBase, CoordinateTransformations, ImageTransformations, Memoization, Statistics, Combinatorics, LinearAlgebra, OffsetArrays, StructArrays, StatsBase, Dierckx, AngleBetweenVectors, DataStructures, Missings, ProgressMeter
 using MATLAB
 using MAT, SparseArrays, StaticArrays, CSV
 using AbstractPlotting, GLMakie, FFMPEG, ImageMagick
@@ -16,20 +16,25 @@ include.(("resfiles.jl", "assertions.jl", "calibrations.jl", "quality.jl", "pois
 function process_csv(csvfile)
     t = loadcsv(csvfile)
     t2 = map(parserow, t)
-    for (i, x) in enumerate(t2)
-        check4errors(i, x)
+    ss = check4errors.(t2)
+    io = IOBuffer()
+    for (i, s) in enumerate(ss)
+        if !isempty(s)
+            println(io, "\nRun #", i)
+            print(io, s)
+        end
     end
-    @info "found no errors in the data"
+    msg = String(take!(io))
+    !isempty(msg) && error(msg)
     path = joinpath(pwd(), "data")
     # path = mktempdir(pwd(); prefix="results_", cleanup=false)
     mkpath(joinpath(path, "quality", "runs"))
     mkpath(joinpath(path, "quality", "calibrations"))
     mkpath(joinpath(path, "results"))
-    for (i, x) in enumerate(t2)
+    @showprogress 1 "Computing..." for (i, x) in enumerate(t2)
         runi = string(i)
         mkpath(joinpath(path, "quality", "runs", runi))
         process_run(x, path, runi)
-        @info "processed run #$i"
     end
 end
 
@@ -43,18 +48,6 @@ end
 parse_intrinsic(::Missing, ::Missing) = missing
 parse_intrinsic(start, stop) = Intrinsic(start, stop)
 parserow(row) = merge(NamedTuple(row), parsepois(row.poi_names), (; intrinsic = parse_intrinsic(row.intrinsic_start, row.intrinsic_stop)))
-
-function check4errors(i, x)
-    a_nest2feeder(i, x.nest2feeder, x.azimuth, x.expected_locations)
-    a_resfile(i, x.resfile)
-    a_poi_videofile(i, x.poi_videofile)
-    a_poi_names(i, x.poi_names)
-    a_coords(i, x.resfile, length(x.poi_names))
-    calibration = Calibration(x.calib_videofile, x.extrinsic, x.intrinsic, x.checker_size)
-    a_calibration(i, calibration)
-    a_turning_point(i, x.poi_videofile, x.turning_point)
-    nothing
-end
 
 # function process_run(x, path, runi)
 @memoize Dict function process_run(x, path, runi)
