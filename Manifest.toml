@@ -8,15 +8,15 @@ version = "0.5.0"
 
 [[AbstractPlotting]]
 deps = ["Animations", "ColorBrewer", "ColorSchemes", "ColorTypes", "Colors", "Contour", "Distributions", "DocStringExtensions", "FFMPEG", "FileIO", "FixedPointNumbers", "Formatting", "FreeType", "FreeTypeAbstraction", "GeometryBasics", "GridLayoutBase", "ImageIO", "IntervalSets", "KernelDensity", "LinearAlgebra", "Markdown", "Match", "Observables", "Packing", "PlotUtils", "Printf", "Random", "Serialization", "Showoff", "SignedDistanceFields", "SparseArrays", "StaticArrays", "Statistics", "StatsBase", "StructArrays", "UnicodeFun"]
-git-tree-sha1 = "459d35b1822aafda2fb8f9bff87e88ce844c1147"
+git-tree-sha1 = "536336dc0ce4ee177012484538b58a2bf5d4005d"
 uuid = "537997a7-5e4e-5d89-9595-2241ea00577e"
-version = "0.12.10"
+version = "0.12.11"
 
 [[Adapt]]
 deps = ["LinearAlgebra"]
-git-tree-sha1 = "841151462b0fdeeb8f2d86ce43796ef59aa4a9ad"
+git-tree-sha1 = "42c42f2221906892ceb765dbcb1a51deeffd86d7"
 uuid = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
-version = "2.2.0"
+version = "2.3.0"
 
 [[AngleBetweenVectors]]
 deps = ["LinearAlgebra", "Test"]
