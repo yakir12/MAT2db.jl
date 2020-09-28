@@ -1,6 +1,6 @@
 module MAT2db
 
-using FilePathsBase, CoordinateTransformations, ImageTransformations, Memoization, Statistics, Combinatorics, LinearAlgebra, OffsetArrays, StructArrays, StatsBase, Dierckx, AngleBetweenVectors, DataStructures, Missings, ProgressMeter
+using FilePathsBase, CoordinateTransformations, ImageTransformations, Memoization, Statistics, Combinatorics, LinearAlgebra, OffsetArrays, StructArrays, StatsBase, Dierckx, AngleBetweenVectors, DataStructures, Missings, ProgressMeter, DataFrames
 using MATLAB
 using MAT, SparseArrays, StaticArrays, CSV
 using AbstractPlotting, GLMakie, FFMPEG, ImageMagick
@@ -27,14 +27,12 @@ function process_csv(csvfile)
     msg = String(take!(io))
     !isempty(msg) && error(msg)
     path = joinpath(pwd(), "data")
-    # path = mktempdir(pwd(); prefix="results_", cleanup=false)
     mkpath(joinpath(path, "quality", "runs"))
     mkpath(joinpath(path, "quality", "calibrations"))
     mkpath(joinpath(path, "results"))
-    @showprogress 1 "Computing..." for (i, x) in enumerate(t2)
-        runi = string(i)
-        mkpath(joinpath(path, "quality", "runs", runi))
-        process_run(x, path, runi)
+    p = Progress(length(t2), 1, "Processing runs...")
+    tracks = progress_map(enumerate(t2), progress=p) do (i, x)
+        process_run(x, path, i)
     end
 end
 
@@ -49,8 +47,9 @@ parse_intrinsic(::Missing, ::Missing) = missing
 parse_intrinsic(start, stop) = Intrinsic(start, stop)
 parserow(row) = merge(NamedTuple(row), parsepois(row.poi_names), (; intrinsic = parse_intrinsic(row.intrinsic_start, row.intrinsic_stop)))
 
-# function process_run(x, path, runi)
-@memoize Dict function process_run(x, path, runi)
+@memoize Dict function process_run(x, path, i)
+    runi = string(i)
+    mkpath(joinpath(path, "quality", "runs", runi))
     coords = resfile2coords(x.resfile, x.poi_videofile)
     pois = Dict(zip(x.poi_names, coords))
     for (k, v) in pois
@@ -61,8 +60,7 @@ parserow(row) = merge(NamedTuple(row), parsepois(row.poi_names), (; intrinsic = 
     plotcalibration(calibration, calib, joinpath(path, "quality", "calibrations", string(basename(calibration.video), calibration.extrinsic)))
 
     calibrate!.(values(pois), Ref(calib))
-    y = Dict(k => (v, only(space(pois[k]))) for (k,v) in x.expected_locations)
-    expected = adjust_expected(y)
+    expected = adjust_expected(Dict(k => (v, only(space(pois[k]))) for (k,v) in x.expected_locations))
     calib2 = build_extra_calibration(Tuple(only(space(pois[k])) for k in keys(expected)), Tuple(values(expected)))
 
     plotcalibratedpoi(Dict(k => deepcopy(v) for (k,v) in pois if length(time(v)) == 1), calib, joinpath(path, "quality", "runs", runi), expected, calib2)
@@ -85,9 +83,17 @@ parserow(row) = merge(NamedTuple(row), parsepois(row.poi_names), (; intrinsic = 
     s = Standardized(z)
     scene = plotrun(s)
     AbstractPlotting.save(joinpath(path, "results", "$runi.png"), scene)
+
+    return (track = s, expected_locations = (; pairs(x.expected_locations)...))
 end
 
 
 
 end
 
+# TODO
+# use labeledarrays to the adjust_expected and build_extra_calibration functions
+# break process_run into composable parts so that the file paths and function srguments can be memoized seperately
+# find a better work around for the metadata and expected_dropoff
+# clean extra packages in the using and dependencies
+# add the resulting table and figures

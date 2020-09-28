@@ -38,7 +38,7 @@ function recordit(poi, file, ind, scene)
     AbstractPlotting.inline!(false)
 end
 
-@memoize function plotcalibration(calibration::Calibration, calib, file)
+function plotcalibration(calibration::Calibration, calib, file)
     scene, layout = layoutscene(0)
     ax = layout[1,1] = LAxis(scene, aspect = DataAspect(), yreversed = true, xlabel = "X (pixel)", ylabel = "Y (pixel)", title = "Raw", backgroundcolor = :black)
     img = getimg(calibration.video, calibration.extrinsic)
