@@ -1,6 +1,6 @@
 module MAT2db
 
-using FilePathsBase, CoordinateTransformations, ImageTransformations, Memoization, Statistics, Combinatorics, LinearAlgebra, OffsetArrays, StructArrays, StatsBase, Dierckx, AngleBetweenVectors, DataStructures, Missings, ProgressMeter, DataFrames
+using FilePathsBase, CoordinateTransformations, ImageTransformations, Memoization, Statistics, Combinatorics, LinearAlgebra, OffsetArrays, StructArrays, StatsBase, Dierckx, AngleBetweenVectors, DataStructures, Missings, ProgressMeter, DataFrames, LabelledArrays
 using MATLAB
 using MAT, SparseArrays, StaticArrays, CSV
 using AbstractPlotting, GLMakie, FFMPEG, ImageMagick
@@ -34,6 +34,7 @@ function process_csv(csvfile)
     tracks = progress_map(enumerate(t2), progress=p) do (i, x)
         process_run(x, path, i)
     end
+    DataFrame(tracks)
 end
 
 function loadcsv(file)
@@ -50,19 +51,20 @@ parserow(row) = merge(NamedTuple(row), parsepois(row.poi_names), (; intrinsic = 
 @memoize Dict function process_run(x, path, i)
     runi = string(i)
     mkpath(joinpath(path, "quality", "runs", runi))
+
     coords = resfile2coords(x.resfile, x.poi_videofile)
     pois = Dict(zip(x.poi_names, coords))
     for (k, v) in pois
         plotrawpoi(v, joinpath(path, "quality", "runs", runi,  String(k)))
     end
+
     calibration = Calibration(x.calib_videofile, x.extrinsic, x.intrinsic, x.checker_size)
     calib = build_calibration(calibration)
     plotcalibration(calibration, calib, joinpath(path, "quality", "calibrations", string(basename(calibration.video), calibration.extrinsic)))
-
     calibrate!.(values(pois), Ref(calib))
-    expected = adjust_expected(Dict(k => (v, only(space(pois[k]))) for (k,v) in x.expected_locations))
-    calib2 = build_extra_calibration(Tuple(only(space(pois[k])) for k in keys(expected)), Tuple(values(expected)))
 
+    expected = adjust_expected(pois, x.expected_locations)
+    calib2 = build_extra_calibration(Tuple(only(space(pois[k])) for k in keys(expected)), Tuple(values(expected)))
     plotcalibratedpoi(Dict(k => deepcopy(v) for (k,v) in pois if length(time(v)) == 1), calib, joinpath(path, "quality", "runs", runi), expected, calib2)
 
     if x.extra_correction
@@ -70,14 +72,13 @@ parserow(row) = merge(NamedTuple(row), parsepois(row.poi_names), (; intrinsic = 
     end
 
     flipy!(pois)
-
     coords = Dict{Symbol, AbstractArray{T,1} where T}(k => k ∈ (:track, :pellet) ? v.xyt : only(space(v)) for (k,v) in pois if !ismissing(v))
 
-    if haskey(x.expected_locations, :dropoff)
-        coords[:expected_dropoff] = x.expected_locations[:dropoff]
-    end
 
     metadata = Dict(:nest2feeder => x.nest2feeder, :azimuth => x.azimuth, :turning_point => x.turning_point)
+    if haskey(x.expected_locations, :dropoff)
+        metadata[:expected_dropoff] = x.expected_locations[:dropoff]
+    end
 
     z = common(coords, metadata)
     s = Standardized(z)
@@ -92,8 +93,8 @@ end
 end
 
 # TODO
-# use labeledarrays to the adjust_expected and build_extra_calibration functions
+# use labeledarrays to build_extra_calibration functions
 # break process_run into composable parts so that the file paths and function srguments can be memoized seperately
-# find a better work around for the metadata and expected_dropoff
 # clean extra packages in the using and dependencies
 # add the resulting table and figures
+# clean the plotting

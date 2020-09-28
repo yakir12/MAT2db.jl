@@ -178,12 +178,9 @@ end
 # end
 
 function createAffineMap(poic, expected)
-    X = ones(3, 3)
-    Y = Matrix{Float64}(undef, 3, 2)
-    for (i, (c, e)) in enumerate(zip(poic, expected))
-        X[i, 1:2] .= c
-        Y[i, :] .= e
-    end
+    X = vcat((poic[k]' for k in keys(expected))...)
+    X = hcat(X, ones(3))
+    Y = hcat(values(expected)...)'
     c = (X \ Y)'
     A = c[:, 1:2]
     b = c[:, 3]

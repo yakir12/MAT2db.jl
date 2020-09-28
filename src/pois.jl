@@ -23,34 +23,23 @@ function parsepois(row)
     (; poi_names, expected_locations)
 end
 
-function adjust_expected(e2c)
-    n = length(e2c)
-    y = Dict{Symbol, Space}()
-    if n ≤ 1
-        for (k, v) in e2c
-            y[k] = last(v)
-        end
-    else
-        realpoints = Matrix{Float64}(undef, 2, n)
-        expectedpoints = Matrix{Float64}(undef, 2, n)
-        for (i, v) in enumerate(values(e2c))
-            e, c = v
-            expectedpoints[:, i] .= e
-            realpoints[:, i] .= c
-        end
-        μr = mean(realpoints, dims = 2)
-        μe = mean(expectedpoints, dims = 2)
-        realpoints .-= μr
-        expectedpoints .-= μe
-        F = svd(expectedpoints * realpoints')
-        R = F.V * F.U'
-        expectedpoints = R * expectedpoints .+ μr
-        for (i, k) in enumerate(keys(e2c))
-            y[k] = Space(expectedpoints[:, i])
-        end
-    end
-    return y
+function _adjust_expected(pois, expected_locations)
+    e = @LArray Matrix(hcat(values(expected_locations)...)) (; Dict(k => (2i-1:2i) for (i,k) in enumerate(keys(expected_locations)))...)
+    r = Matrix(hcat((only(space(pois[k])) for k in keys(expected_locations))...))
+    R, μ = getR(e, r)
+    Dict(k => Space(R * e[k] + μ) for k in keys(expected_locations))
 end
+
+function getR(e, r)
+    e .-= mean(e, dims = 2)
+    μr = mean(r, dims = 2)
+    r .-= μr
+    F = svd(e * r')
+    R = F.V * F.U'
+    return R, μr
+end
+
+adjust_expected(pois, expected_locations) = length(expected_locations) ≤ 1 ?  Dict(k => only(space(pois[k])) for k in keys(expected_locations)) : _adjust_expected(pois, expected_locations)
 
 function flipy!(pois)
     ymax = maximum(maximum(last, space(v)) for v in values(pois))
