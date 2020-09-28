@@ -75,7 +75,6 @@ parserow(row) = merge(NamedTuple(row), parsepois(row.poi_names), (; intrinsic = 
 
     coords = Dict{Symbol, AbstractArray{T,1} where T}(k => k ∈ (:track, :pellet) ? v.xyt : only(space(v)) for (k,v) in pois if !ismissing(v))
 
-
     if haskey(x.expected_locations, :dropoff)
         coords[:expected_dropoff] = x.expected_locations[:dropoff]
     end
