@@ -10,10 +10,14 @@ This is a package for analysing tracks in the Dacke lab. This will only work if:
 
 
 ## To install
+You'll need a new version of Julia installed (see [here](https://julialang.org/downloads/) for instructions on how to install Julia).
+
+Start a new Julia REPL (e.g. by double-clicking the Julia icon). In the new terminal, type a righthand squarebracket (`]`) and then `add https://github.com/yakir12/MAT2db.jl`, followed by pressing `Enter`:
 ```julia
 ] add https://github.com/yakir12/MAT2db.jl
 ```
 
+## Setup
 Create a `.csv` file like [this one](/example/example.csv) (e.g. with Microsoft Excel). Each row in the file (except the title row) is one run. There may be as many rows (=runs) as you like. The file must have the following columns:
 1. `resfile`: the full path to the `.res` file containing all the pixel coordinates of the POIs.
 2. `poi_videofile`: the full path to the video file containing the POIs.
