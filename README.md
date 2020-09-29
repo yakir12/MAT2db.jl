@@ -91,6 +91,7 @@ For each run there will be a folder (labeled 1, 2, 3 etc.). In each of those fol
 Check that:
 - Are all the POIs labeled correctly?
 - Are all the POIs located accurately?
+
 An additional image, `calibrated POIs.png`, shows two panes:
 1. a calibrated snapshot from the POI-video and with it all the calibrated POIs (labeled).
 2. the same as above but corrected to the expected locations of the POIs.
