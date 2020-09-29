@@ -44,9 +44,9 @@ First use the package:
 ```julia
 using MAT2db
 ```
-and then run the main function:
+and then run the main function, where `<full_file_path>` is the full path to the `csv` file (e.g. `/home/yakir/tmp/example.csv`):
 ```
-process_csv("this is the full path to the your csv file.csv")
+process_csv(<full_file_path>)
 ```
 
 This will first check for any errors in your files (read any error messages to discover what went wrong). If no errors were detected, it will save quality reports and results on all of the calibrations and runs in a `data` folder in the same location you ran the code from:
