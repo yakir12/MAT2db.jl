@@ -1,6 +1,6 @@
 module MAT2db
 
-using FilePathsBase, CoordinateTransformations, ImageTransformations, Memoization, Statistics, Combinatorics, LinearAlgebra, OffsetArrays, StructArrays, StatsBase, Dierckx, AngleBetweenVectors, DataStructures, Missings, ProgressMeter, DataFrames, LabelledArrays
+using FilePathsBase, CoordinateTransformations, ImageTransformations, Memoization, Statistics, Combinatorics, LinearAlgebra, OffsetArrays, StructArrays, StatsBase, Dierckx, AngleBetweenVectors, DataStructures, Missings, ProgressMeter, DataFrames, LabelledArrays, Measurements
 using MATLAB
 using MAT, SparseArrays, StaticArrays, CSV
 using AbstractPlotting, GLMakie, FFMPEG, ImageMagick
@@ -11,7 +11,7 @@ export process_csv
 const pathtype = String#typeof(Path())
 const csvfile_columns = Dict(:resfile => pathtype, :poi_videofile => pathtype, :poi_names => String, :calib_videofile => pathtype, :extrinsic => Float64, :intrinsic_start => Float64, :intrinsic_stop => Float64, :checker_size => Float64, :nest2feeder => Float64, :azimuth => Float64, :extra_correction => Bool, :turning_point => Float64)
 
-include.(("resfiles.jl", "assertions.jl", "calibrations.jl", "quality.jl", "pois.jl", "tracks.jl", "common.jl", "plots.jl"))
+include.(("resfiles.jl", "assertions.jl", "calibrations.jl", "quality.jl", "pois.jl", "tracks.jl", "common.jl", "plots.jl", "stats.jl"))
 
 function process_csv(csvfile)
     t = loadcsv(csvfile)
@@ -34,7 +34,8 @@ function process_csv(csvfile)
     tracks = progress_map(enumerate(t2), progress=p) do (i, x)
         process_run(x, path, i)
     end
-    DataFrame(tracks)
+    df = DataFrame(torow.(tracks))
+    df[:, Not(All(:homing, :searching, :track))]  |> CSV.write(joinpath(path, "results", "data.csv"))
 end
 
 function loadcsv(file)
@@ -85,10 +86,17 @@ parserow(row) = merge(NamedTuple(row), parsepois(row.poi_names), (; intrinsic = 
     scene = plotrun(s)
     AbstractPlotting.save(joinpath(path, "results", "$runi.png"), scene)
 
-    return (track = s, expected_locations = (; pairs(x.expected_locations)...))
+    return s
+
 end
 
+function torow(s)
+    fs = (:homing, :searching , :center_of_search, :turning_point, :nest, :feeder)
+    xs = map(f -> getproperty(s,f), fs)
+    return merge(to_namedtuple(s), NamedTuple{fs}(xs), speedstats(s.track))
+end
 
+to_namedtuple(x::T) where {T} = NamedTuple{fieldnames(T)}(ntuple(i -> getfield(x, i), Val(nfields(x))))
 
 end
 

@@ -28,10 +28,15 @@ function Track(xyt, tp)
     Track(xyl, tl, i)
 end
 
-homing(t::Track) = t.coords[1:t.tp]
-searching(t::Track) = t.coords[t.tp:end]
-center_of_search(t::Track) = mean(searching(t))
-turning_point(t::Track) = t.coords[t.tp]
+# homing(t::Track) = t.coords[1:t.tp]
+# searching(t::Track) = t.coords[t.tp:end]
+# center_of_search(t::Track) = mean(searching(t))
+# turning_point(t::Track) = t.coords[t.tp]
+Base.getproperty(x::Track, k::Symbol) = k === :homing ? x.coords[1:x.tp] :
+                                         k === :searching ?  x.coords[x.tp:end] :
+                                         k === :center_of_search ? mean(x.coords[x.tp:end]) :
+                                         k === :turning_point ? x.coords[x.tp] :
+                                         getfield(x, k)
 
 const ignorefirst = 10 # cm
 const bigturn = π/3 # 60°
