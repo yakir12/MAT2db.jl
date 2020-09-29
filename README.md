@@ -49,7 +49,18 @@ and then run the main function, where `<full_file_path>` is the full path to the
 process_csv(<full_file_path>)
 ```
 
-This will first check for any errors in your files (read any error messages to discover what went wrong). If no errors were detected, it will save quality reports and results on all of the calibrations and runs in a `data` folder in the same location you ran the code from:
+This will first check for any errors in your files. Read any error messages to discover what went wrong, for instance:
+```
+ERROR: 
+Run #3
+- intrinsic time-stamp is not in the video
+Run #7
+- extrinsic time-stamp is not in the video
+- intrinsic time-stamp is not in the video
+```
+reports that in run #3 (so row #4 in the csv-file) the time-stamp of the intrinsic calibration is outside of the scope of the video (e.g. a time-stamp of 2 minutes in a video that is 1 minute long), and that in run #7, both the extrinsic time stamp and intrinsic time stamp are out of scope.  
+
+If no errors were detected, it will save quality reports and results on all of the calibrations and runs in a `data` folder in the same location you ran the code from:
 ```
 data
 ├── quality
