@@ -58,7 +58,7 @@ Run #7
 - extrinsic time-stamp is not in the video
 - intrinsic time-stamp is not in the video
 ```
-reports that in run #3 (so row #4 in the csv-file) the time-stamp of the intrinsic calibration is outside of the scope of the video (e.g. a time-stamp of 2 minutes in a video that is 1 minute long), and that in run #7, both the extrinsic time stamp and intrinsic time stamp are out of scope.  
+reports that in run #3 (so row #4 in the csv-file) the time-stamp of the intrinsic calibration is outside of the scope of the video (e.g. a time-stamp of 2 minutes in a video that is 1 minute long), and that in run #7, both the extrinsic time stamp and intrinsic time stamp are out of scope. After fixing the rported erros, rerun the `process_csv` function, and repeat until no errors are reported.
 
 If no errors were detected, it will save quality reports and results on all of the calibrations and runs in a `data` folder in the same location you ran the code from:
 ```
