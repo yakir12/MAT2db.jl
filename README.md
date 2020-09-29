@@ -44,7 +44,7 @@ First use the package:
 ```julia
 using MAT2db
 ```
-and then run the main function, where `<full_file_path>` is the full path to the `csv` file (e.g. `/home/yakir/tmp/example.csv`):
+and then run the main function, where `<full_file_path>` is the full path to the `csv` file surrounded by quotation marks, `"` (e.g. `"/home/yakir/tmp/example.csv"`):
 ```
 process_csv(<full_file_path>)
 ```
