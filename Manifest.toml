@@ -8,15 +8,15 @@ version = "0.5.0"
 
 [[AbstractPlotting]]
 deps = ["Animations", "ColorBrewer", "ColorSchemes", "ColorTypes", "Colors", "Contour", "Distributions", "DocStringExtensions", "FFMPEG", "FileIO", "FixedPointNumbers", "Formatting", "FreeType", "FreeTypeAbstraction", "GeometryBasics", "GridLayoutBase", "ImageIO", "IntervalSets", "KernelDensity", "LinearAlgebra", "Markdown", "Match", "Observables", "Packing", "PlotUtils", "Printf", "Random", "Serialization", "Showoff", "SignedDistanceFields", "SparseArrays", "StaticArrays", "Statistics", "StatsBase", "StructArrays", "UnicodeFun"]
-git-tree-sha1 = "459d35b1822aafda2fb8f9bff87e88ce844c1147"
+git-tree-sha1 = "9ee8fa697abda6ef492691af819aaa9213ee9044"
 uuid = "537997a7-5e4e-5d89-9595-2241ea00577e"
-version = "0.12.10"
+version = "0.12.12"
 
 [[Adapt]]
 deps = ["LinearAlgebra"]
-git-tree-sha1 = "841151462b0fdeeb8f2d86ce43796ef59aa4a9ad"
+git-tree-sha1 = "42c42f2221906892ceb765dbcb1a51deeffd86d7"
 uuid = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
-version = "2.2.0"
+version = "2.3.0"
 
 [[AngleBetweenVectors]]
 deps = ["LinearAlgebra", "Test"]
@@ -106,9 +106,9 @@ version = "0.4.0"
 
 [[ColorSchemes]]
 deps = ["ColorTypes", "Colors", "FixedPointNumbers", "Random", "StaticArrays"]
-git-tree-sha1 = "950f477dfe152a0dd2221124986a5722db385199"
+git-tree-sha1 = "5d472aa8908568bc198564db06983913a6c2c8e7"
 uuid = "35d6a980-a343-548e-a6ea-1d62b119f2f4"
-version = "3.10.0"
+version = "3.10.1"
 
 [[ColorTypes]]
 deps = ["FixedPointNumbers", "Random"]
@@ -619,9 +619,9 @@ uuid = "510215fc-4207-5dde-b226-833fc4488ee2"
 version = "0.3.1"
 
 [[OffsetArrays]]
-git-tree-sha1 = "9011c7c98769c451f83869a4d66461e2f23bc80b"
+git-tree-sha1 = "3fdfca8a532507d65f39ff0ad34fe81097a55337"
 uuid = "6fe1bfb0-de20-5000-8ca7-80f57d26f881"
-version = "1.2.1"
+version = "1.3.0"
 
 [[Ogg_jll]]
 deps = ["Libdl", "Pkg"]
@@ -740,9 +740,9 @@ version = "0.2.0"
 
 [[Requires]]
 deps = ["UUIDs"]
-git-tree-sha1 = "2fc2e1ab606a5dca7bbad9036a694553c3a57926"
+git-tree-sha1 = "28faf1c963ca1dc3ec87f166d92982e3c4a1f66d"
 uuid = "ae029012-a4dd-5104-9daa-d747884805df"
-version = "1.0.3"
+version = "1.1.0"
 
 [[Rmath]]
 deps = ["Random", "Rmath_jll"]
