@@ -8,10 +8,10 @@ struct Common
     dropoff::Space
 end
 
-Base.getproperty(x::Common, k::Symbol) = k === :homing ? homing(x.track) :
-                                         k === :searching ? searching(x.track) :
-                                         k === :center_of_search ? center_of_search(x.track) :
-                                         k === :turning_point ? turning_point(x.track) :
+Base.getproperty(x::Common, k::Symbol) = k === :homing ? x.track.homing :
+                                         k === :searching ? x.track.searching :
+                                         k === :center_of_search ? x.track.center_of_search :
+                                         k === :turning_point ? x.track.turning_point :
                                          getfield(x, k)
 
 
@@ -107,10 +107,10 @@ struct Standardized
     dropoff::Space
 end
 
-Base.getproperty(x::Standardized, k::Symbol) = k === :homing ? homing(x.track) :
-                                         k === :searching ? searching(x.track) :
-                                         k === :center_of_search ? center_of_search(x.track) :
-                                         k === :turning_point ? turning_point(x.track) :
+Base.getproperty(x::Standardized, k::Symbol) = k === :homing ? x.track.homing :
+                                         k === :searching ? x.track.searching :
+                                         k === :center_of_search ? x.track.center_of_search :
+                                         k === :turning_point ? x.track.turning_point :
                                          k === :nest ? zero(Space) :
                                          k == :feeder ? Space(0.0, -x.nest2feeder) :
                                          getfield(x, k)
