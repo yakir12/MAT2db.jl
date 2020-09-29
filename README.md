@@ -59,7 +59,7 @@ Run #7
 ```
 reports that in run #3 (so row #4 in the csv-file) the time-stamp of the intrinsic calibration is outside of the scope of the video (e.g. a time-stamp of 2 minutes in a video that is 1 minute long), and that in run #7, both the extrinsic time stamp and intrinsic time stamp are out of scope. After fixing the reported errors, rerun the `process_csv` function, and repeat until no errors are reported.
 
-If no errors were detected, it will save quality reports and results on all of the calibrations and runs in a `data` folder in the same location you ran the code from:
+If no errors were detected, it will save quality reports and results on all of the calibrations and runs in a `data` folder in the same location you ran the code from. For example:
 ```
 data
 ├── quality
@@ -76,17 +76,30 @@ data
 └── results
     └── 1.png
 ```
-In the quality folder: The calibration image shows how the calibrated checkerboard image compares to the raw one as well as the minimum, mean, and maximum calibration errors in cm.
-In each run folder there are the raw POIs and their pixel coordinates (track is a movie while the others are images), as well as the calibrated POIs and their relative distances to each other in cm (this includes the calibrated and corrected representations).
-In the results folder: Each run has one result image showing the track and POIs oriented so that the nest is at origo and the feeder is directly below it. 
+## data
+### quality
+#### calibrations
+A calibration image shows how the calibrated checkerboard image compares to the raw one as well as the minimum, mean, and maximum calibration errors in cm.
 
-## To check for
-In terms of the calibrations:
+Check that:
 - Is the checkerboard flush against the ground?
 - Are the X and Y axes in the calibrated image correct (scale-wise and is the left bottom corner of the checkerboard at `(0,0)`)?
 - Are the errors acceptable (e.g. what is the maximal error)?
-In terms of the runs:
+#### runs
+For each run there will be a folder (labeled 1, 2, 3 etc.). In each of those folders are images of the POIs. These are extracted frames from the POI-video highlighting (in red) where the specific POI is located. The `track` POI is a summarized video (instead of an image). 
+
+Check that:
 - Are all the POIs labeled correctly?
 - Are all the POIs located accurately?
-- Do the angles and distances in the calibrated POIs make sense (e.g. is the distance between the nest and feeder ~130cm)?
+An additional image, `calibrated POIs.png`, shows two panes:
+1. a calibrated snapshot from the POI-video and with it all the calibrated POIs (labeled).
+2. the same as above but corrected to the expected locations of the POIs.
+
+Check that:
+- Do the angles and distances in the calibrated POIs make sense (e.g. is the distance between the nest and feeder ~130cm, is the angle between the `initialfeeder`, `feeder`, and `nest` 90°)?
 - Are the deviations in the calibrated image unacceptable (locations, distances, and angles are significantly off the marks)?
+### results
+Each run has one result image showing the track and POIs oriented so that the nest is at origo and the feeder is directly below it. 
+
+Check that:
+- everything looks right.
