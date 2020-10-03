@@ -2,11 +2,12 @@
 
 This is a package for analysing tracks in the Dacke lab. This will only work if:
 1. You have Matlab™ installed.
-2. Each run in your experiment has exactly one:
+2. You have Matlab™'s Computer Vision System Toolbox installed.
+3. Each run in your experiment has exactly one:
     1. res-file (e.g. `file.res`) containing all the relevant POIs (Points of Interest).
     2. video-file containing all the relevant POIs.
     3. video-file containing the calibration.
-3. The exact same file can be used as the POI video-file and as the calibration video-file within the same run as well as between multiple runs.
+4. The exact same file can be used as the POI video-file and as the calibration video-file within the same run as well as between multiple runs.
 
 ## To install
 You'll need a new version of Julia installed (see [here](https://julialang.org/downloads/) for instructions on how to install Julia).
