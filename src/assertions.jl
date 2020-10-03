@@ -1,3 +1,7 @@
+function a_computer_vision_toolbox() 
+    mat"""$i = license('test','Video_and_Image_Blockset')"""
+    @assert i == 1 "the Matlab Computer Vision System Toolbox is not available"
+end
 a_csvfile(file) = @assert isfile(file) "missing csv file"
 function a_table(t)
     @assert length(t) ≠ 0 "csv file has no lines"

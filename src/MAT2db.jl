@@ -13,6 +13,8 @@ const csvfile_columns = Dict(:resfile => pathtype, :poi_videofile => pathtype, :
 
 include.(("resfiles.jl", "assertions.jl", "calibrations.jl", "quality.jl", "pois.jl", "tracks.jl", "common.jl", "plots.jl", "stats.jl"))
 
+a_computer_vision_toolbox()
+
 function process_csv(csvfile)
     t = loadcsv(csvfile)
     t2 = map(parserow, t)
