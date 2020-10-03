@@ -2,7 +2,7 @@
 
 This is a package for analysing tracks in the Dacke lab. This will only work if:
 1. You have Matlab™ installed.
-2. You have Matlab™'s Computer Vision System Toolbox installed.
+2. You have Matlab™'s `Computer Vision System` toolbox installed.
 3. Each run in your experiment has exactly one:
     1. res-file (e.g. `file.res`) containing all the relevant POIs (Points of Interest).
     2. video-file containing all the relevant POIs.
