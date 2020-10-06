@@ -1,3 +1,4 @@
+unfliprotate(img) = rotl90(img[:, end:-1:1])
 fliprotate(img) = rotr90(img)[:, end:-1:1]
 # tmix=frames=15:weights="1 1 1 1 1 1 1 1 1 1 1 1 1 1 1" 
 function getimg(file, t)

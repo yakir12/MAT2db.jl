@@ -34,6 +34,7 @@ Create a `.csv` file like [this one](/example/example.csv) (e.g. with Microsoft 
 12. `turning_point`: if you want to override the automatic detection of the turning point, specify the time-stamp in the video (i.e. the `poi_videofile`) when the animal turns, otherwise leave empty.
 
 ### Notes
+- The number of names in the `poi_names` column must be equal to the number of columns in the `res` file, even if one (or more) of the columns is empty.
 - `intrinsic_start`, `intrinsic_stop`, `azimuth`, and `turning_point` can be left empty when not relevant.
 - `poi_videofile` and `calib_videofile` can be the exact same file within and between row/s. 
 - The expected locations in `poi_names` should only refer to POIs that you have an actual location for (e.g. a POI that has a column in the `res` file). So for instance, it is not ok to specify `nest 0 0` for a transfer experiment.

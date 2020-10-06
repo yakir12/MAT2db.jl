@@ -18,23 +18,21 @@ time(x::POI) = x.xyt.t
 space(x::POI, i) = x.xyt[i].xy
 time(x::POI, i) = x.xyt[i].t
 
-function resfile2coords(resfile, videofile)
+function resfile2coords(resfile, videofile, poi_names)
     matopen(resfile) do io
         xdata = read(io, "xdata")
         fr = read(io, "status")["FrameRate"]
         rows = rowvals(xdata)
         xvals = nonzeros(xdata)
         yvals = nonzeros(read(io, "ydata"))
-        n = size(xdata, 2)
-        coords = POI[]
-        for j = 1:n
+        pois = Dict{Symbol, POI}()
+        for (j, name) in enumerate(poi_names)
             i = nzrange(xdata, j)
             if !isempty(i)
-                poi = POI(xvals[i], yvals[i], rows[i]/fr, videofile)
-                push!(coords, poi)
+                pois[name] = POI(xvals[i], yvals[i], rows[i]/fr, videofile)
             end
         end
-        return coords
+        return pois
     end
 end
 

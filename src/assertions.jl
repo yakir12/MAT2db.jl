@@ -1,6 +1,5 @@
 function a_computer_vision_toolbox() 
     mat"""$i = license('test','Video_and_Image_Blockset')"""
-    @info "checking if the Matlab Computer Vision System Toolbox is available…" i
     @assert i == 1 "the Matlab Computer Vision System Toolbox is not available"
 end
 a_csvfile(file) = @assert isfile(file) "missing csv file"
@@ -42,8 +41,8 @@ function c_poi_names(io, poi_names)
     good ? poi_names : missing
 end
 
-a_coords(io, x, y) = nothing
-function a_coords(io, resfile::AbstractString, poi_names::Vector{AbstractString})
+a_coords(io, x, y::Missing) = nothing
+function a_coords(io, resfile, poi_names::Vector{Symbol})
     matopen(resfile) do mio
         for field in ("xdata", "ydata", "status")
             if !MAT.exists(mio, field) 
@@ -55,10 +54,9 @@ function a_coords(io, resfile::AbstractString, poi_names::Vector{AbstractString}
         xdata = read(mio, "xdata")
         n = size(xdata, 2)
         npoints = [length(nzrange(xdata, j)) for j in 1:n]
+        !all(iszero, npoints) || println(io, "- res file is empty")
         nmax = maximum(npoints)
         nmax > 5 || println(io, "- res file missing a POI with more than 5 data points (e.g. a track)")
-        n = count(!iszero, npoints)
-        n ≠ 0 || println(io, "- res file is empty")
         npois = length(poi_names)
         npois == n || println(io, "- number of POIs, $npois, doesn't match the number of res columns, $n")
     end
@@ -114,6 +112,9 @@ _get_expected_nest2feeder(::Missing, ::Missing) = missing
 a_expected_nest2feeder(io, ::Missing, nest2feeder) = nothing
 a_expected_nest2feeder(io, expected_nest2feeder, nest2feeder) = expected_nest2feeder ≈ nest2feeder || println(io, "- nest2feeder, $nest2feeder, is not equal to the distance between the expected nest and feeder locations, $expected_nest2feeder")
 
+a_extra_correction(io, ::Bool) = nothing
+a_extra_correction(io, _) = println(io, "- extra correction is missing/wrong (use true/false)")
+
 function check4errors(x)
     io = IOBuffer()
     resfile = c_resfile(io, x.resfile)
@@ -125,6 +126,7 @@ function check4errors(x)
     a_calibration(io, calib_videofile, x.extrinsic, x.intrinsic, x.checker_size)
     expected_nest2feeder = _get_expected_nest2feeder(x.expected_locations)
     a_expected_nest2feeder(io, expected_nest2feeder, x.nest2feeder)
+    a_extra_correction(io, x.extra_correction)
     String(take!(io))
 end
 

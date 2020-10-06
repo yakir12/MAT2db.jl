@@ -1,7 +1,7 @@
 module MAT2db
 
-using FilePathsBase, CoordinateTransformations, ImageTransformations, Memoization, Statistics, Combinatorics, LinearAlgebra, OffsetArrays, StructArrays, StatsBase, Dierckx, AngleBetweenVectors, DataStructures, Missings, ProgressMeter, DataFrames, LabelledArrays, Measurements
-using MATLAB
+using FilePathsBase, CoordinateTransformations, ImageTransformations, Memoization, Statistics, Combinatorics, LinearAlgebra, OffsetArrays, StructArrays, StatsBase, Dierckx, AngleBetweenVectors, DataStructures, Missings, ProgressMeter, DataFrames, LabelledArrays, Measurements, ImageCore
+using MATLAB, FileIO
 using MAT, SparseArrays, StaticArrays, CSV
 using AbstractPlotting, GLMakie, FFMPEG, ImageMagick
 using AbstractPlotting.MakieLayout
@@ -55,8 +55,7 @@ parserow(row) = merge(NamedTuple(row), parsepois(row.poi_names), (; intrinsic = 
     runi = string(i)
     mkpath(joinpath(path, "quality", "runs", runi))
 
-    coords = resfile2coords(x.resfile, x.poi_videofile)
-    pois = Dict(zip(x.poi_names, coords))
+    pois = resfile2coords(x.resfile, x.poi_videofile, x.poi_names)
     for (k, v) in pois
         plotrawpoi(v, joinpath(path, "quality", "runs", runi,  String(k)))
     end
