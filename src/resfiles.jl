@@ -10,7 +10,7 @@ SpaceTime(x, y, t) = SpaceTime(Space(x, y), t)
 
 struct POI
     xyt::StructVector{SpaceTime}
-    video::String
+    video::SystemPath
 end
 POI(x, y, t, v) = POI(StructVector(SpaceTime.(x, y, t)), v)
 space(x::POI) = x.xyt.xy
@@ -19,7 +19,7 @@ space(x::POI, i) = x.xyt[i].xy
 time(x::POI, i) = x.xyt[i].t
 
 function resfile2coords(resfile, videofile, poi_names)
-    matopen(resfile) do io
+    matopen(string(resfile)) do io
         xdata = read(io, "xdata")
         fr = read(io, "status")["FrameRate"]
         rows = rowvals(xdata)

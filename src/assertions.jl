@@ -43,7 +43,7 @@ end
 
 a_coords(io, x, y::Missing) = nothing
 function a_coords(io, resfile, poi_names::Vector{Symbol})
-    matopen(resfile) do mio
+    matopen(string(resfile)) do mio
         for field in ("xdata", "ydata", "status")
             if !MAT.exists(mio, field) 
                 println(io, "- resfile missing $field")
@@ -134,3 +134,9 @@ function get_duration(file)
     p = FFMPEG.exe(`-i $file -show_entries format=duration -v quiet -of csv="p=0"`, command=FFMPEG.ffprobe, collect=true)
     parse(Float64, only(p))
 end
+
+# function get_dimentions(file)
+#     p = FFMPEG.exe(`-i $file -show_entries stream=width,height -of csv=p=0:s=x`, command=FFMPEG.ffprobe, collect=true)
+#     txt = split(only(p), 'x')
+#     parse.(Int, txt)
+# end
