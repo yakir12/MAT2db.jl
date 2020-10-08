@@ -102,7 +102,6 @@ to_namedtuple(x::T) where {T} = NamedTuple{fieldnames(T)}(ntuple(i -> getfield(x
 end
 
 # TODO
-# use labeledarrays to build_extra_calibration functions
 # break process_run into composable parts so that the file paths and function srguments can be memoized seperately
 # clean extra packages in the using and dependencies
 # add the resulting table and figures

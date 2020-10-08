@@ -1,3 +1,5 @@
+splat(f) = args -> f(args...)
+
 struct Calibration{T}
     video::SystemPath
     extrinsic::Float64
@@ -86,10 +88,9 @@ function spawnmatlab(check, extrinsic, intrinsic)
     $world = pointsToWorld(params, R, t, $image);
     """
     _tform = interpolate(reshape(Space.(eachrow(world)), h, w)', BSpline(Linear()))
-    tform = scale(_tform, 1:w, 1:h)
-    ((mx, Mx), (my, My)) = bounds(tform)
-    mx, my = tform(mx, my)
-    Mx, My = tform(Mx, My)
+    tform = splat(extrapolate(scale(_tform, 1:w, 1:h), Flat()))
+    mx, Mx = extrema(world[:,1])
+    my, My = extrema(world[:,2])
     xs = mx:Mx
     ys = my:My
     worldPoints = vcat(([x y 0.0] for x in xs for y in ys)...)
@@ -97,7 +98,7 @@ function spawnmatlab(check, extrinsic, intrinsic)
     $projectedPoints = worldToImage(params,R,t,$worldPoints);
     """
     _itform = interpolate(reshape(Space.(eachrow(projectedPoints)), length(ys), length(xs))', BSpline(Linear()))
-    itform = scale(_itform, xs, ys)
+    itform = splat(extrapolate(scale(_itform, xs, ys), Flat()))
     ϵ = round.(quantile(errors2, [0, 0.5, 1]), digits = 2)
     BothCalibration((; tform, itform), ϵ)
 end
@@ -128,22 +129,8 @@ end
 
 calibrate!(poi, c) = map!(c, space(poi), space(poi))
 calibrate!(poi, c::ExtrinsicCalibration) = map!(c.tform, space(poi), space(poi))
+calibrate!(poi, c::BothCalibration) = map!(c.matlab.tform, space(poi), space(poi))
 
-# function calibrate!(poi, c::BothCalibration)
-calibrate!(poi, c::BothCalibration) = map!(Base.splat(c.matlab.tform), space(poi), space(poi))
-#     space(poi) .= [c.matlab.tform(i...) for i in space(poi)]
-# end
-
-# calibrate(c::ExtrinsicCalibration, i::Interval) = c.tform.(space(i))
-# calibrate(c::ExtrinsicCalibration, x::Singular) = c.tform(space(x))
-# function calibrate(c::BothCalibration, i::POI)
-#     parameters, R, t = c.matlab
-#     xy = space(i)
-#     mat"""
-#     $xy2 = pointsToWorld($params, $R, $t, $xy);
-#     """
-#     return xy2
-# end
 
 function calibrate(c::ExtrinsicCalibration, img)
     indices = ImageTransformations.autorange(img, c.tform)
@@ -151,21 +138,15 @@ function calibrate(c::ExtrinsicCalibration, img)
     return indices, parent(imgw)
 end
 function calibrate(c::BothCalibration, img)
-    mxMx, myMy = bounds(c.matlab.itform)
-    mx, Mx = round.(Int, mxMx) .+ [1, -1]
-    my, My = round.(Int, myMy) .+ [1, -1]
-    xs = mx:Mx
-    ys = my:My
-    w, h = size(img)
-    iimg = LinearInterpolation((1:w, 1:h), img, extrapolation_bc = colorant"black")
-    imgw = [iimg(c.matlab.itform(x, y)...) for x in xs, y in ys]
-    return (xs, ys), imgw
+    indices = ImageTransformations.autorange(img, c.matlab.tform)
+    imgw = warp(img, c.matlab.itform, indices)
+    return indices, parent(imgw)
 end
 
 build_extra_calibration(c::NTuple{0}, e::NTuple{0}) = IdentityTransformation()
 build_extra_calibration(c::NTuple{1}, e::NTuple{1}) = IdentityTransformation()
 function build_extra_calibration(c::NTuple{2}, e::NTuple{2})
-    s = norm(diff(e))/norm(diff(c))
+    s = norm(e[2] - e[1])/norm(c[2] - c[1])
     LinearMap(Diagonal(SVector(s, s)))
 end
 build_extra_calibration(c::NTuple{3}, e::NTuple{3}) = createAffineMap(c, e)
@@ -173,21 +154,6 @@ function build_extra_calibration(c::NTuple{N}, e::NTuple{N}) where N
     @warn "didn't implement an extra calibration for more than 3 expected locations. Using the first 3 only."
     createAffineMap(c[1:3], e[1:3])
 end
-
-# function build_extra_calibration(c2e)
-#     n = length(c2e)
-#     if n ≤ 1
-#         Translation(Space(0, 0))
-#     elseif n == 2
-#         s = norm(diff(last.(c2e)))/norm(diff(first.(c2e)))
-#         LinearMap(Diagonal(SVector(s, s)))
-#     elseif n == 3
-#         createAffineMap(first.(c2e), last.(c2e))
-#     else
-#         @warn "didn't implement an extra calibration for more than 3 expected locations. Using the first 3 only."
-#         createAffineMap(first.(c2e[1:3]), last.(c2e[1:3]))
-#     end
-# end
 
 function createAffineMap(poic, expected)
     X = vcat((poic[k]' for k in keys(expected))...)
@@ -198,22 +164,3 @@ function createAffineMap(poic, expected)
     b = c[:, 3]
     AffineMap(SMatrix{2,2,Float64}(A), SVector{2, Float64}(b))
 end
-
-
-# extracalib(calib, _, poi) = calib
-# extracalib(calib::ExtrinsicCalibration, ::Missing, poi) = calib
-# function extracalib(calib::ExtrinsicCalibration, expected_locations, poi)
-#     # Space = SVector{2, Float64}
-#     # d = Vector{Pair{Space, Space}}(undef, 3)
-#     # for (i, kxy) in enumerate(split(expected_locations, ','))
-#     #     _k, _x, _y = filter(!isempty, split(kxy, ' '))
-#     #     k = strip(_k)
-#     #     x = parse(Float64, strip(_x))
-#     #     y = parse(Float64, strip(_y))
-#     #     d[i] = Space(x, y) => space(poi[k]) 
-#     # end
-#     # itform = AffineMap(d)
-#     tform = Translation(SVector{2, Float64}(100,0))
-#     ExtrinsicCalibration(calib.tform ∘ tform, calib.itform, calib.ϵ)
-# end
-

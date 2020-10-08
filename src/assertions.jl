@@ -98,8 +98,15 @@ function a_calibration(io, calib_videofile, extrinsic, intrinsic, checker_size)
     a_intrinsic(io, intrinsic, duration)
 end
 
-a_nest2feeder(io, ::Missing) = println(io, "- nest2feeder is missing in csv file")
-a_nest2feeder(io, nest2feeder) = nest2feeder > 0 || println(io, "- nest to feeder distance must be larger than zero")
+c_nest2feeder(io, ::Missing) = missing
+function c_nest2feeder(io, nest2feeder) 
+    if nest2feeder < 0 
+        println(io, "- nest to feeder distance must be larger than zero")
+        return missing
+    else
+        return nest2feeder
+    end
+end
 a_azimuth(io, ::Missing) = nothing
 a_azimuth(io, azimuth) = 0 < azimuth < 360 || println(io, "- azimuth must be between 0° and 360°")
 
@@ -109,8 +116,10 @@ _get_expected_nest2feeder(nest, feeder) = norm(nest - feeder)
 _get_expected_nest2feeder(::Missing, feeder) = missing
 _get_expected_nest2feeder(nest, ::Missing) = missing
 _get_expected_nest2feeder(::Missing, ::Missing) = missing
-a_expected_nest2feeder(io, ::Missing, nest2feeder) = nothing
-a_expected_nest2feeder(io, expected_nest2feeder, nest2feeder) = expected_nest2feeder ≈ nest2feeder || println(io, "- nest2feeder, $nest2feeder, is not equal to the distance between the expected nest and feeder locations, $expected_nest2feeder")
+a_expected_nest2feeder(io, ::Missing, nest2feeder::Missing) = nothing
+a_expected_nest2feeder(io, ::Real, nest2feeder::Missing) = println(io, "it seems like you have expectations on the distance between the nest and feeder, but nest2feeder is missing")
+a_expected_nest2feeder(io, ::Missing, nest2feeder::Real) = println(io, "it seems like you should have expectations on the distance between the nest and feeder since nest2feeder is not missing")
+a_expected_nest2feeder(io, expected_nest2feeder::Real, nest2feeder::Real) = expected_nest2feeder ≈ nest2feeder || println(io, "- nest2feeder, $nest2feeder, is not equal to the distance between the expected nest and feeder locations, $expected_nest2feeder")
 
 a_extra_correction(io, ::Bool) = nothing
 a_extra_correction(io, _) = println(io, "- extra correction is missing/wrong (use true/false)")
@@ -124,8 +133,10 @@ function check4errors(x)
     a_turning_point(io, poi_videofile, x.turning_point)
     calib_videofile = c_videofile(io, x.calib_videofile, "Calibration")
     a_calibration(io, calib_videofile, x.extrinsic, x.intrinsic, x.checker_size)
+    nest2feeder = c_nest2feeder(io, x.nest2feeder)
+    a_azimuth(io, x.azimuth)
     expected_nest2feeder = _get_expected_nest2feeder(x.expected_locations)
-    a_expected_nest2feeder(io, expected_nest2feeder, x.nest2feeder)
+    a_expected_nest2feeder(io, expected_nest2feeder, nest2feeder)
     a_extra_correction(io, x.extra_correction)
     String(take!(io))
 end
