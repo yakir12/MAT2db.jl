@@ -52,6 +52,7 @@ parse_intrinsic(start, stop) = Intrinsic(start, stop)
 parserow(row) = merge(NamedTuple(row), parsepois(row.poi_names), (; intrinsic = parse_intrinsic(row.intrinsic_start, row.intrinsic_stop)))
 
 @memoize Dict function process_run(x, path, i)
+    @debug "processing run #$i" x
     runi = string(i)
     mkpath(joinpath(path, "quality", "runs", runi))
 

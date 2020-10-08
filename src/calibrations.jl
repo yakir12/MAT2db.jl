@@ -24,7 +24,6 @@ push1(x) = push(x, 1.0)
 
 function spawnmatlab(check, extrinsic, ::Missing)
     mat"""
-    warning('off','all')
     I = imread($extrinsic);
     [imagePoints, boardSize] = detectCheckerboardPoints(I);
     worldPoints = generateCheckerboardPoints(boardSize, $check);
@@ -50,7 +49,6 @@ function spawnmatlab(check, extrinsic, intrinsic)
     _image = [(x, y) for x in 1:w for y in 1:h]
     image = hcat(first.(_image), last.(_image))
     mat"""
-    warning('off','all')
     [imagePoints, boardSize, imagesUsed] = detectCheckerboardPoints($intrinsic);
     $kept = 1:length($intrinsic);
     $kept = $kept(imagesUsed);
@@ -119,6 +117,7 @@ function extract(intrinsic::Intrinsic, video, path)
 end
 
 @memoize function build_calibration(c)
+    @debug "building calibration" c
     mktempdir() do path
     # path = mktempdir(cleanup = false)
         extrinsic = extract(c.extrinsic, c.video, path)
