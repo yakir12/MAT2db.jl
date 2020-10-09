@@ -41,8 +41,8 @@ function c_poi_names(io, poi_names)
     good ? poi_names : missing
 end
 
-a_coords(io, x, y) = nothing
-function a_coords(io, resfile::AbstractString, poi_names::Vector{Symbol})
+a_coords(io, x, y, d) = nothing
+function a_coords(io, resfile::SystemPath, poi_names::Vector{Symbol}, duration::Float64)
     matopen(string(resfile)) do mio
         for field in ("xdata", "ydata", "status")
             if !MAT.exists(mio, field) 
@@ -59,6 +59,16 @@ function a_coords(io, resfile::AbstractString, poi_names::Vector{Symbol})
         nmax > 5 || println(io, "- res file missing a POI with more than 5 data points (e.g. a track)")
         npois = length(poi_names)
         npois == n || println(io, "- number of POIs, $npois, doesn't match the number of res columns, $n")
+        rows = rowvals(xdata)
+        tmax = 0.0
+        fr = read(mio, "status")["FrameRate"]
+        for j in eachindex(poi_names)
+            i = nzrange(xdata, j)
+            if !isempty(i)
+                tmax = max(tmax, rows[i[end]]/fr)
+            end
+        end
+        tmax ≤ duration || println(io, "- one of the POIs' time-stamp is not in the video")
     end
 end
 
@@ -72,9 +82,8 @@ function c_videofile(io, videofile, what)
     end
 end
 
-a_turning_point(io, x, y) = nothing
-function a_turning_point(io, poi_videofile::AbstractString, t::Float64)
-    duration = get_duration(poi_videofile)
+a_turning_point(io, x, y, d) = nothing
+function a_turning_point(io, poi_videofile::AbstractString, t::Float64, duration::Float64)
     0 ≤ t ≤ duration || println(io, "- turning point time-stamp is not in the video")
 end
 
@@ -128,9 +137,10 @@ function check4errors(x)
     io = IOBuffer()
     resfile = c_resfile(io, x.resfile)
     poi_names = c_poi_names(io, x.poi_names)
-    a_coords(io, resfile, poi_names)
     poi_videofile = c_videofile(io, x.poi_videofile, "POI")
-    a_turning_point(io, poi_videofile, x.turning_point)
+    duration = get_duration(poi_videofile)
+    a_coords(io, resfile, poi_names, duration)
+    a_turning_point(io, poi_videofile, x.turning_point, duration)
     calib_videofile = c_videofile(io, x.calib_videofile, "Calibration")
     a_calibration(io, calib_videofile, x.extrinsic, x.intrinsic, x.checker_size)
     nest2feeder = c_nest2feeder(io, x.nest2feeder)
@@ -141,6 +151,7 @@ function check4errors(x)
     String(take!(io))
 end
 
+get_duration(::Missing) = missing
 function get_duration(file)
     p = FFMPEG.exe(`-i $file -show_entries format=duration -v quiet -of csv="p=0"`, command=FFMPEG.ffprobe, collect=true)
     parse(Float64, only(p))

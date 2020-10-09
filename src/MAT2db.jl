@@ -8,7 +8,6 @@ using AbstractPlotting.MakieLayout
 
 export process_csv
 
-mat"""warning('off','all')"""
 
 const pathtype = typeof(Path())
 const csvfile_columns = Dict(:resfile => pathtype, :poi_videofile => pathtype, :poi_names => String, :calib_videofile => pathtype, :extrinsic => Float64, :intrinsic_start => Float64, :intrinsic_stop => Float64, :checker_size => Float64, :nest2feeder => Float64, :azimuth => Float64, :extra_correction => Bool, :turning_point => Float64)
@@ -44,7 +43,7 @@ end
 
 function loadcsv(file)
     a_csvfile(file)
-    t = CSV.File(file, normalizenames = true, types = csvfile_columns)
+    t = CSV.File(file, normalizenames = true, types = csvfile_columns, delim = ';')
     a_table(t)
     return t
 end
