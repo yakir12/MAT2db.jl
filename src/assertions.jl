@@ -64,7 +64,7 @@ function a_coords(io, resfile::SystemPath, poi_names::Vector{Symbol}, duration::
         haskey(read(mio, "status"), "nFrames") || println(io,  "- resfile missing number of total frames")
         nf = read(mio, "status")["nFrames"]
         duration2 = nf/fr
-        duration2 ≈ duration || println(io, "- the duration of the POI video file, $duration s, and the one reported in the res file, $duration2 s, are not the same")
+        isapprox(duration2, duration, atol = 1) || println(io, "- the duration of the POI video file, $duration s, and the one reported in the res file, $duration2 s, are not the same")
         for (j, name) in enumerate(poi_names)
             i = nzrange(xdata, j)
             if !isempty(i)
