@@ -81,8 +81,14 @@ function spawnmatlab(check, extrinsic, intrinsic)
     $errors2 = errors;
     %%
     imUndistorted = undistortImage(extrinsicI, params);
-    [imagePoints,boardSize] = detectCheckerboardPoints(imUndistorted);
-    [R,t] = extrinsics(imagePoints,worldPoints,params);
+    MinCornerMetric = 0.15;
+    xy = detectCheckerboardPoints(imUndistorted, 'MinCornerMetric', MinCornerMetric);
+    MinCornerMetric = 0.;
+    while size(xy,1) ~= size(worldPoints, 1)
+        MinCornerMetric = MinCornerMetric + 0.05;
+        xy = detectCheckerboardPoints(imUndistorted, 'MinCornerMetric', MinCornerMetric);
+    end
+    [R,t] = extrinsics(xy,worldPoints,params);
     $world = pointsToWorld(params, R, t, $image);
     """
     _tform = interpolate(reshape(Space.(eachrow(world)), h, w)', BSpline(Linear()))

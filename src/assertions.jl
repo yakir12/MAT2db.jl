@@ -41,8 +41,8 @@ function c_poi_names(io, poi_names)
     good ? poi_names : missing
 end
 
-a_coords(io, x, y::Missing) = nothing
-function a_coords(io, resfile, poi_names::Vector{Symbol})
+a_coords(io, x, y) = nothing
+function a_coords(io, resfile::AbstractString, poi_names::Vector{Symbol})
     matopen(string(resfile)) do mio
         for field in ("xdata", "ydata", "status")
             if !MAT.exists(mio, field) 
