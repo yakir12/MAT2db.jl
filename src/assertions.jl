@@ -60,15 +60,18 @@ function a_coords(io, resfile::SystemPath, poi_names::Vector{Symbol}, duration::
         npois = length(poi_names)
         npois == n || println(io, "- number of POIs, $npois, doesn't match the number of res columns, $n")
         rows = rowvals(xdata)
-        tmax = 0.0
         fr = read(mio, "status")["FrameRate"]
-        for j in eachindex(poi_names)
+        haskey(read(mio, "status"), "nFrames") || println(io,  "- resfile missing number of total frames")
+        nf = read(mio, "status")["nFrames"]
+        duration2 = nf/fr
+        duration2 ≈ duration || println(io, "- the duration of the POI video file, $duration s, and the one reported in the res file, $duration2 s, are not the same")
+        for (j, name) in enumerate(poi_names)
             i = nzrange(xdata, j)
             if !isempty(i)
-                tmax = max(tmax, rows[i[end]]/fr)
+                t = rows[i[end]]/fr
+                t ≤ duration || println(io, "- the time-stamp of the $name POI is not in the video")
             end
         end
-        tmax ≤ duration || println(io, "- one of the POIs' time-stamp is not in the video")
     end
 end
 
