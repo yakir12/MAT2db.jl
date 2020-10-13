@@ -43,7 +43,7 @@ end
 
 function loadcsv(file)
     a_csvfile(file)
-    t = CSV.File(file, normalizenames = true, types = csvfile_columns)
+    t = CSV.File(file, normalizenames = true, types = csvfile_columns)#, delim=';')
     a_table(t)
     return t
 end
