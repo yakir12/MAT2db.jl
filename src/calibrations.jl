@@ -86,27 +86,36 @@ function spawnmatlab(check, extrinsic, intrinsic)
     MinCornerMetric = 0.15;
     xy = detectCheckerboardPoints(imUndistorted, 'MinCornerMetric', MinCornerMetric);
     MinCornerMetric = 0.;
-    while size(xy,1) ~= size(worldPoints, 1)
+    i = 0;
+    while size(xy,1) ~= size(worldPoints, 1) && i < 25
         MinCornerMetric = MinCornerMetric + 0.05;
+        i = i + 1;
         xy = detectCheckerboardPoints(imUndistorted, 'MinCornerMetric', MinCornerMetric);
     end
-    [R,t] = extrinsics(xy,worldPoints,params);
-    $world = pointsToWorld(params, R, t, $image);
+    $failed = size(xy,1) ~= size(worldPoints, 1)
     """
-    _tform = interpolate(reshape(Space.(eachrow(world)), h, w)', BSpline(Linear()))
-    tform = splat(extrapolate(scale(_tform, 1:w, 1:h), Flat()))
-    mx, Mx = extrema(world[:,1])
-    my, My = extrema(world[:,2])
-    xs = mx:Mx
-    ys = my:My
-    worldPoints = vcat(([x y 0.0] for x in xs for y in ys)...)
-    mat"""
-    $projectedPoints = worldToImage(params,R,t,$worldPoints);
-    """
-    _itform = interpolate(reshape(Space.(eachrow(projectedPoints)), length(ys), length(xs))', BSpline(Linear()))
-    itform = splat(extrapolate(scale(_itform, xs, ys), Flat()))
-    ϵ = round.(quantile(errors2, [0, 0.5, 1]), digits = 2)
-    BothCalibration((; tform, itform), ϵ)
+    if failed
+        @error "extrinsic image is of too low quality, select another time-stamp with a clearer extrinsic image"
+    else
+        mat"""
+        [R,t] = extrinsics(xy,worldPoints,params);
+        $world = pointsToWorld(params, R, t, $image);
+        """
+        _tform = interpolate(reshape(Space.(eachrow(world)), h, w)', BSpline(Linear()))
+        tform = splat(extrapolate(scale(_tform, 1:w, 1:h), Flat()))
+        mx, Mx = extrema(world[:,1])
+        my, My = extrema(world[:,2])
+        xs = mx:Mx
+        ys = my:My
+        worldPoints = vcat(([x y 0.0] for x in xs for y in ys)...)
+        mat"""
+        $projectedPoints = worldToImage(params,R,t,$worldPoints);
+        """
+        _itform = interpolate(reshape(Space.(eachrow(projectedPoints)), length(ys), length(xs))', BSpline(Linear()))
+        itform = splat(extrapolate(scale(_itform, xs, ys), Flat()))
+        ϵ = round.(quantile(errors2, [0, 0.5, 1]), digits = 2)
+        BothCalibration((; tform, itform), ϵ)
+    end
 end
 
 extract(::Missing, _, path) = missing
@@ -127,7 +136,7 @@ end
 @memoize function build_calibration(c)
     @debug "building calibration" c
     mktempdir() do path
-    # path = mktempdir(cleanup = false)
+        # path = mktempdir(cleanup = false)
         extrinsic = extract(c.extrinsic, c.video, path)
         intrinsic = extract(c.intrinsic, c.video, path)
         spawnmatlab(c.checker_size, extrinsic, intrinsic)
