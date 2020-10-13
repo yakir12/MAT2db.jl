@@ -1,7 +1,7 @@
 name = "MAT2db"
 uuid = "210f2f7c-c278-4e54-96d9-b4d41cb9412a"
 authors = ["Yakir Gagnon <12.yakir@gmail.com> and contributors"]
-version = "0.1.1"
+version = "0.1.2"
 
 [deps]
 AbstractPlotting = "537997a7-5e4e-5d89-9595-2241ea00577e"
@@ -49,7 +49,7 @@ Dierckx = "0.5"
 FFMPEG = "0.4"
 FileIO = "1.4"
 FilePathsBase = "0.9"
-GLMakie = "0.1"
+GLMakie = "0.1.11"
 ImageCore = "0.8"
 ImageMagick = "1.1"
 ImageTransformations = "0.8"
