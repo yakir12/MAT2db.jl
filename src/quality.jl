@@ -31,12 +31,10 @@ end
 recordit(file, scene) = AbstractPlotting.save("$file.png", scene)
 
 function recordit(poi, file, ind, scene)
-    fps = 15
-    AbstractPlotting.inline!(true)
-    record(scene, "$file.mkv", round.(Int, range(1, stop = length(time(poi)), length = 1fps)); framerate = fps) do i
+    for (j,i) in enumerate(round.(Int, range(1, stop = length(time(poi)), length = 5)))
         ind[] = i
+        AbstractPlotting.save("$file$j.png", scene)
     end
-    AbstractPlotting.inline!(false)
 end
 
 function plotcalibration(calibration::Calibration, calib, file)
