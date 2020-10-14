@@ -74,7 +74,11 @@ data
 │           ├── initialfeeder.png
 │           ├── nest.png
 │           ├── pellet.png
-│           └── track.mkv
+│           ├── track1.png
+│           ├── track2.png
+│           ├── track3.png
+│           ├── track4.png
+│           └── track5.png
 └── results
     └── 1.png
 ```
@@ -91,7 +95,7 @@ Check that:
 - Are there any other obvious problems with the calibrated image? 
 - Are the errors acceptable?
 #### runs
-For each run there will be a folder (labeled 1, 2, 3 etc.). In each of those folders are images of the POIs. These are extracted frames from the POI-video highlighting (in red) where the specific POI is located. The `track` POI is a summarized video (instead of an image). 
+For each run there will be a folder (labeled 1, 2, 3 etc.). In each of those folders are images of the POIs. These are extracted frames from the POI-video highlighting (in red) where the specific POI is located. The `track` POI is a shown as a series of 5 images uniformly extracted from the video.
 
 Check that:
 - Are all the POIs labeled correctly?
