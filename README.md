@@ -81,11 +81,14 @@ data
 ## data
 ### quality
 #### calibrations
-A calibration image shows how the calibrated checkerboard image compares to the raw one as well as the minimum, mean, and maximum calibration errors in cm (ϵ). This error is the mean distance (in cm) between the expected locations of the checkerboard's corners (e.g. `(0,0), (4, 0), (8,0)...`) and the location of the corners that were detected in the image and calibrated from pixel coordinates to real-world coordinates. You can think of this error as a measure of how bad the smallest errors in the image are (image locations that are further away from the checkerboard's location in the image may have larger errors).
+A calibration image shows how the calibrated checkerboard image compares to the raw one as well as the minimum, mean, and maximum calibration errors in cm (ϵ). This error is the mean distance (in cm) between the expected locations of the checkerboard's corners (e.g. `(0,0), (4, 0), (8,0)...`) and the location of the corners that were detected in the image and calibrated from pixel coordinates to real-world coordinates. You can think of this error as a measure of how bad the smallest errors in the image are (image locations that are further away from the checkerboard's location in the image may have larger errors). Depending on your needs, an error of 1 cm means that the location of any POIs (e.g. nest, turning point, fictive nest, etc.) may be 1 cm off its true location.
 
 Check that:
 - Is the checkerboard flush against the ground?
-- Are there any obvious errors with the X and Y axes in the calibrated image (e.g. the scene is 10,000 or 10 cm wide/tall, is the aspect ratio totally wrong, is the left top corner of the checkerboard at `(0,0)`)?
+- Are the dimensions of the scene reasonable (i.e. not 10,000 or 10 cm wide/tall)?
+- Is the aspect ratio of the scene normal (e.g. the scene is not 10 cm wide and 10 m tall)?
+- Is the left top corner of the checkerboard at `(0,0)`)?
+- Are there any other obvious problems with the calibrated image? 
 - Are the errors acceptable?
 #### runs
 For each run there will be a folder (labeled 1, 2, 3 etc.). In each of those folders are images of the POIs. These are extracted frames from the POI-video highlighting (in red) where the specific POI is located. The `track` POI is a summarized video (instead of an image). 
