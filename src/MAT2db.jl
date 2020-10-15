@@ -6,6 +6,8 @@ using MAT, SparseArrays, StaticArrays, CSV
 using AbstractPlotting, GLMakie, FFMPEG, ImageMagick
 using AbstractPlotting.MakieLayout
 
+using CameraCalibrations
+
 export process_csv
 
 

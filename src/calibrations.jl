@@ -139,25 +139,27 @@ end
         # path = mktempdir(cleanup = false)
         extrinsic = extract(c.extrinsic, c.video, path)
         intrinsic = extract(c.intrinsic, c.video, path)
-        spawnmatlab(c.checker_size, extrinsic, intrinsic)
+        # spawnmatlab(c.checker_size, extrinsic, intrinsic)
+        buildcalibration(c.checker_size, extrinsic, intrinsic)
     end
 end
 
-calibrate!(poi, c) = map!(c, space(poi), space(poi))
-calibrate!(poi, c::ExtrinsicCalibration) = map!(c.tform, space(poi), space(poi))
-calibrate!(poi, c::BothCalibration) = map!(c.matlab.tform, space(poi), space(poi))
+# calibrate!(poi, c) = map!(c, space(poi), space(poi))
+# calibrate!(poi, c::ExtrinsicCalibration) = map!(c.tform, space(poi), space(poi))
+# calibrate!(poi, c::BothCalibration) = map!(c.matlab.tform, space(poi), space(poi))
 
+calibrate!(poi, c) = map!(xy -> calibrate(c, xy), space(poi), space(poi))
 
-function calibrate(c::ExtrinsicCalibration, img)
-    indices = ImageTransformations.autorange(img, c.tform)
-    imgw = warp(img, c.itform, indices)
-    return indices, parent(imgw)
-end
-function calibrate(c::BothCalibration, img)
-    indices = ImageTransformations.autorange(img, c.matlab.tform)
-    imgw = warp(img, c.matlab.itform, indices)
-    return indices, parent(imgw)
-end
+# function calibrate(c::ExtrinsicCalibration, img)
+#     indices = ImageTransformations.autorange(img, c.tform)
+#     imgw = warp(img, c.itform, indices)
+#     return indices, parent(imgw)
+# end
+# function calibrate(c::BothCalibration, img)
+#     indices = ImageTransformations.autorange(img, c.matlab.tform)
+#     imgw = warp(img, c.matlab.itform, indices)
+#     return indices, parent(imgw)
+# end
 
 build_extra_calibration(c::NTuple{0}, e::NTuple{0}) = IdentityTransformation()
 build_extra_calibration(c::NTuple{1}, e::NTuple{1}) = IdentityTransformation()
