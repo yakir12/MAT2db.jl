@@ -41,6 +41,15 @@ function c_poi_names(io, poi_names)
     good ? poi_names : missing
 end
 
+c_expected_locations(io, ::Missing) = nothing
+function c_expected_locations(io, expected_locations)
+    if !allunique(values(expected_locations))
+        println(io, "- at least two of the POI's expected locations are identical")
+        return missing
+    end
+    expected_locations
+end
+
 a_coords(io, x, y, d) = nothing
 function a_coords(io, resfile::SystemPath, poi_names::Vector{Symbol}, duration::Float64)
     matopen(string(resfile)) do mio
@@ -123,14 +132,15 @@ a_azimuth(io, ::Missing) = nothing
 a_azimuth(io, azimuth) = 0 < azimuth < 360 || println(io, "- azimuth must be between 0° and 360°")
 
 __getfeeder(x) = get(x, :initialfeeder, get(x, :pickup, get(x, :feeder, missing)))
+_get_expected_nest2feeder(::Missing) = missing
 _get_expected_nest2feeder(x) = _get_expected_nest2feeder(get(x, :nest, missing), __getfeeder(x))
 _get_expected_nest2feeder(nest, feeder) = norm(nest - feeder)
 _get_expected_nest2feeder(::Missing, feeder) = missing
 _get_expected_nest2feeder(nest, ::Missing) = missing
 _get_expected_nest2feeder(::Missing, ::Missing) = missing
 a_expected_nest2feeder(io, ::Missing, nest2feeder::Missing) = nothing
-a_expected_nest2feeder(io, ::Real, nest2feeder::Missing) = println(io, "it seems like you have expectations on the distance between the nest and feeder, but nest2feeder is missing")
-a_expected_nest2feeder(io, ::Missing, nest2feeder::Real) = println(io, "it seems like you should have expectations on the distance between the nest and feeder since nest2feeder is not missing")
+a_expected_nest2feeder(io, ::Real, nest2feeder::Missing) = println(io, "- it seems like you have expectations on the distance between the nest and feeder, but nest2feeder is missing")
+a_expected_nest2feeder(io, ::Missing, nest2feeder::Real) = println(io, "- it seems like you should have expectations on the distance between the nest and feeder since nest2feeder is not missing")
 a_expected_nest2feeder(io, expected_nest2feeder::Real, nest2feeder::Real) = expected_nest2feeder ≈ nest2feeder || println(io, "- nest2feeder, $nest2feeder, is not equal to the distance between the expected nest and feeder locations, $expected_nest2feeder")
 
 a_extra_correction(io, ::Bool) = nothing
@@ -140,6 +150,7 @@ function check4errors(x)
     io = IOBuffer()
     resfile = c_resfile(io, x.resfile)
     poi_names = c_poi_names(io, x.poi_names)
+    expected_locations = c_expected_locations(io, x.expected_locations)
     poi_videofile = c_videofile(io, x.poi_videofile, "POI")
     duration = get_duration(poi_videofile)
     a_coords(io, resfile, poi_names, duration)
@@ -148,7 +159,7 @@ function check4errors(x)
     a_calibration(io, calib_videofile, x.extrinsic, x.intrinsic, x.checker_size)
     nest2feeder = c_nest2feeder(io, x.nest2feeder)
     a_azimuth(io, x.azimuth)
-    expected_nest2feeder = _get_expected_nest2feeder(x.expected_locations)
+    expected_nest2feeder = _get_expected_nest2feeder(expected_locations)
     a_expected_nest2feeder(io, expected_nest2feeder, nest2feeder)
     a_extra_correction(io, x.extra_correction)
     String(take!(io))

@@ -68,7 +68,7 @@ parserow(row) = merge(NamedTuple(row), parsepois(row.poi_names), (; intrinsic = 
     calibrate!.(values(pois), Ref(calib))
 
     expected = adjust_expected(pois, x.expected_locations)
-    calib2 = build_extra_calibration(Tuple(only(space(pois[k])) for k in keys(expected)), Tuple(values(expected)))
+    calib2 = build_extra_calibration([only(space(pois[k])) for k in keys(expected)], deepcopy(collect(values(expected))))
     plotcalibratedpoi(Dict(k => deepcopy(v) for (k,v) in pois if length(time(v)) == 1), calib, joinpath(path, "quality", "runs", runi), expected, calib2)
 
     if x.extra_correction

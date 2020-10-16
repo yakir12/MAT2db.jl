@@ -159,18 +159,6 @@ function calibrate(c::BothCalibration, img)
     return indices, parent(imgw)
 end
 
-build_extra_calibration(c::NTuple{0}, e::NTuple{0}) = IdentityTransformation()
-build_extra_calibration(c::NTuple{1}, e::NTuple{1}) = IdentityTransformation()
-function build_extra_calibration(c::NTuple{2}, e::NTuple{2})
-    s = norm(e[2] - e[1])/norm(c[2] - c[1])
-    LinearMap(Diagonal(SVector(s, s)))
-end
-build_extra_calibration(c::NTuple{3}, e::NTuple{3}) = createAffineMap(c, e)
-function build_extra_calibration(c::NTuple{N}, e::NTuple{N}) where N 
-    @warn "didn't implement an extra calibration for more than 3 expected locations. Using the first 3 only."
-    createAffineMap(c[1:3], e[1:3])
-end
-
 function createAffineMap(poic, expected)
     X = vcat((poic[k]' for k in keys(expected))...)
     X = hcat(X, ones(3))
@@ -179,4 +167,43 @@ function createAffineMap(poic, expected)
     A = c[:, 1:2]
     b = c[:, 3]
     AffineMap(SMatrix{2,2,Float64}(A), SVector{2, Float64}(b))
+end
+
+function build_extra_calibration(c, e)
+    k = filter_collinearity(e)
+    @show k
+    deleteat!(c, k)
+    deleteat!(e, k)
+    npoints = length(e)
+    if npoints < 2
+        IdentityTransformation()
+    elseif npoints < 3
+        s = norm(e[2] - e[1])/norm(c[2] - c[1])
+        LinearMap(Diagonal(SVector(s, s)))
+    else
+        createAffineMap(c[1:3], e[1:3])
+    end
+end
+
+function find_collinear(xy)
+    inds = ((1, 2), (1, 3), (2, 3))
+    Δ = [norm(xy[i1] - xy[i2]) for (i1, i2) in inds]
+    M, i = findmax(Δ)
+    j, l = setdiff(1:3, i)
+    Δ[j] + Δ[l] ≈ M && return only(setdiff(1:3, inds[i]))
+    nothing
+end
+
+updatek!(k, j, ::Nothing) = nothing
+updatek!(k, j, i) = push!(k, j[i])
+
+function filter_collinearity(xy)
+    k = Int[]
+    for j in combinations(1:length(xy), 3)
+        if !any(∈(k), j)
+            i = find_collinear(xy[j])
+            updatek!(k, j, i)
+        end
+    end
+    k
 end
