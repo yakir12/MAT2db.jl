@@ -50,8 +50,17 @@ function c_expected_locations(io, expected_locations)
     expected_locations
 end
 
-a_coords(io, x, y, d) = nothing
-function a_coords(io, resfile::SystemPath, poi_names::Vector{Symbol}, duration::Float64)
+a_expected_locations(io, ::Missing, poi_names, npoints) = nothing
+function a_expected_locations(io, expected_locations, poi_names, npoints)
+    for (k, v) in expected_locations
+        i = findfirst(==(k), poi_names)
+        n = npoints[i]
+        n == 1 || println(io, "- you expected $k to be at $v, yet there are $n lines in its column (column #$i) in the res-file")
+    end
+end
+
+a_coords(io, x, y, d, e) = nothing
+function a_coords(io, resfile::SystemPath, poi_names::Vector{Symbol}, duration::Float64, expected_locations)
     matopen(string(resfile)) do mio
         for field in ("xdata", "ydata", "status")
             if !MAT.exists(mio, field) 
@@ -63,6 +72,7 @@ function a_coords(io, resfile::SystemPath, poi_names::Vector{Symbol}, duration::
         xdata = read(mio, "xdata")
         n = size(xdata, 2)
         npoints = [length(nzrange(xdata, j)) for j in 1:n]
+        a_expected_locations(io, expected_locations, poi_names, npoints)
         !all(iszero, npoints) || println(io, "- res file is empty")
         nmax = maximum(npoints)
         nmax > 5 || println(io, "- res file missing a POI with more than 5 data points (e.g. a track)")
@@ -153,7 +163,7 @@ function check4errors(x)
     expected_locations = c_expected_locations(io, x.expected_locations)
     poi_videofile = c_videofile(io, x.poi_videofile, "POI")
     duration = get_duration(poi_videofile)
-    a_coords(io, resfile, poi_names, duration)
+    a_coords(io, resfile, poi_names, duration, expected_locations)
     a_turning_point(io, poi_videofile, x.turning_point, duration)
     calib_videofile = c_videofile(io, x.calib_videofile, "Calibration")
     a_calibration(io, calib_videofile, x.extrinsic, x.intrinsic, x.checker_size)
