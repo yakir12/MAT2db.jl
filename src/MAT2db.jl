@@ -1,6 +1,6 @@
 module MAT2db
 
-using FilePathsBase, CoordinateTransformations, ImageTransformations, Memoization, Statistics, Combinatorics, LinearAlgebra, OffsetArrays, StructArrays, StatsBase, Dierckx, AngleBetweenVectors, DataStructures, Missings, ProgressMeter, DataFrames, LabelledArrays, Measurements, ImageCore, Interpolations
+using FilePathsBase, CoordinateTransformations, ImageTransformations, Memoization, Statistics, Combinatorics, LinearAlgebra, OffsetArrays, StructArrays, StatsBase, Dierckx, AngleBetweenVectors, DataStructures, Missings, ProgressMeter, DataFrames, LabelledArrays, Measurements, ImageCore, Interpolations, Tar
 using MATLAB, FileIO
 using MAT, SparseArrays, StaticArrays, CSV
 using AbstractPlotting, GLMakie, FFMPEG, ImageMagick
@@ -16,7 +16,7 @@ include.(("resfiles.jl", "assertions.jl", "calibrations.jl", "quality.jl", "pois
 
 a_computer_vision_toolbox()
 
-function process_csv(csvfile)
+function process_csv(csvfile; debug = false)
     t = loadcsv(csvfile)
     t2 = map(parserow, t)
     ss = check4errors.(t2)
@@ -35,10 +35,36 @@ function process_csv(csvfile)
     mkpath(joinpath(path, "results"))
     p = Progress(length(t2), 1, "Processing runs...")
     tracks = progress_map(enumerate(t2), progress=p) do (i, x)
-        process_run(x, path, i)
+        @debug "processing run #$i\n If this fails, please send me the whole error message and if needed, also:" begin
+            x.resfiles
+            x.poi_videofile
+            x.calib_videofile
+            csvfile
+        end
+        if debug
+            try 
+                process_run(x, path, i)
+            catch ex
+                tbname, tbio = mktemp(cleanup = false)
+                mktempdir() do path
+                    rowi = NamedTuple(t[i])
+                    tbl = merge(rowi, (resfile = basename(rowi.resfile), poi_videofile = basename(rowi.poi_videofile), calib_videofile = basename(rowi.calib_videofile)))
+                    CSV.write(joinpath(path, "csvfile.csv"), [tbl])
+                    cp(string(x.resfile), joinpath(path, basename(x.resfile)))
+                    map(unique((x.poi_videofile, x.calib_videofile))) do file
+                        cp(string(file), joinpath(path, basename(file)))
+                    end
+                    Tar.create(path, tbio)
+                    close(tbio)
+                    @warn "an error has occured! please send me this file:" tbname
+                end
+            end
+        else
+            process_run(x, path, i)
+            df = DataFrame(torow.(tracks))
+            df[:, Not(All(:homing, :searching, :track))]  |> CSV.write(joinpath(path, "results", "data.csv"))
+        end
     end
-    df = DataFrame(torow.(tracks))
-    df[:, Not(All(:homing, :searching, :track))]  |> CSV.write(joinpath(path, "results", "data.csv"))
 end
 
 function loadcsv(file)
@@ -53,7 +79,6 @@ parse_intrinsic(start, stop) = Intrinsic(start, stop)
 parserow(row) = merge(NamedTuple(row), parsepois(row.poi_names), (; intrinsic = parse_intrinsic(row.intrinsic_start, row.intrinsic_stop)))
 
 @memoize Dict function process_run(x, path, i)
-    @debug "processing run #$i" x
     runi = string(i)
     mkpath(joinpath(path, "quality", "runs", runi))
 
@@ -100,6 +125,21 @@ function torow(s)
 end
 
 to_namedtuple(x::T) where {T} = NamedTuple{fieldnames(T)}(ntuple(i -> getfield(x, i), Val(nfields(x))))
+
+
+function debug(tbname)
+    tmp = "/home/yakir/tmp2"
+    for file in readdir(tmp, join = true)
+        if last(splitext(file)) ≠ ".toml"
+            rm(file, force = true, recursive = true)
+        end
+    end
+    files = Tar.extract(tbname)
+    map(readdir(files, join = true)) do file
+        mv(file, joinpath(tmp, basename(file)))
+    end
+    process_csv("csvfile.csv")
+end
 
 end
 

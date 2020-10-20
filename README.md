@@ -115,3 +115,10 @@ Each run has one result image showing the track and POIs oriented so that the ne
 
 Check that:
 - everything looks right.
+
+## To debug
+If you run into some unknown error, run the `process_csv` function in the debug mode:
+```
+process_csv("csvfile.csv", debug = true)
+```
+This will produce a (tarball) file that you can send to me.

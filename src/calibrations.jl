@@ -27,6 +27,7 @@ function spawnmatlab(check, extrinsic, ::Missing)
     warning('off','all')
     I = imread($extrinsic);
     [imagePoints, boardSize] = detectCheckerboardPoints(I);
+    $failed = prod(boardSize) <= 1;
     worldPoints = generateCheckerboardPoints(boardSize, $check);
     tform_ = fitgeotrans(imagePoints, worldPoints, 'projective');
     $xy1 = imagePoints;
@@ -36,11 +37,15 @@ function spawnmatlab(check, extrinsic, ::Missing)
     [x, y] = transformPointsForward(tform_, imagePoints(:,1), imagePoints(:,2));
     $errors = vecnorm(worldPoints - [x, y], 2, 2);
     """
-    M = LinearMap(SMatrix{3,3, Float64}(tform'))
-    tform = PerspectiveMap() ∘ M ∘ push1
-    itform = PerspectiveMap() ∘ inv(M) ∘ push1
-    ϵ = round.(quantile(errors, [0, 0.5, 1]), digits = 2)
-    ExtrinsicCalibration(tform, itform, ϵ)
+    if failed
+        @error "extrinsic image is of too low quality, select another time-stamp with a clearer extrinsic image"
+    else
+        M = LinearMap(SMatrix{3,3, Float64}(tform'))
+        tform = PerspectiveMap() ∘ M ∘ push1
+        itform = PerspectiveMap() ∘ inv(M) ∘ push1
+        ϵ = round.(quantile(errors, [0, 0.5, 1]), digits = 2)
+        ExtrinsicCalibration(tform, itform, ϵ)
+    end
 end
 
 
@@ -134,7 +139,7 @@ function extract(intrinsic::Intrinsic, video, path)
 end
 
 @memoize function build_calibration(c)
-    @debug "building calibration" c
+    # @debug "building calibration" c
     mktempdir() do path
         # path = mktempdir(cleanup = false)
         extrinsic = extract(c.extrinsic, c.video, path)
@@ -171,7 +176,6 @@ end
 
 function build_extra_calibration(c, e)
     k = filter_collinearity(e)
-    @show k
     deleteat!(c, k)
     deleteat!(e, k)
     npoints = length(e)
