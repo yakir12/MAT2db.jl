@@ -56,7 +56,7 @@ function process_csv(csvfile; debug = false)
                     end
                     Tar.create(path, tbio)
                     close(tbio)
-                    @warn "an error has occured! please send me this file:" tbname
+                    @error "an error has occured! please send me this file:" tbname
                 end
             end
         else
