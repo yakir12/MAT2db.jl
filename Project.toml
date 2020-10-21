@@ -67,6 +67,7 @@ Rotations = "1.0"
 StaticArrays = "0.12"
 StatsBase = "0.33"
 StructArrays = "0.4"
+Tar = "1.8"
 Unitful = "1.4"
 julia = "1"
 
