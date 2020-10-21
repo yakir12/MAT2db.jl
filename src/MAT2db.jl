@@ -56,10 +56,10 @@ function process_csv(csvfile; debug = false)
             end
         else
             process_run(x, path, i)
-            df = DataFrame(torow.(tracks))
-            df[:, Not(All(:homing, :searching, :track))]  |> CSV.write(joinpath(path, "results", "data.csv"))
         end
     end
+    df = DataFrame(torow.(tracks))
+    df[:, Not(All(:homing, :searching, :track))]  |> CSV.write(joinpath(path, "results", "data.csv"))
 end
 
 function loadcsv(file)
