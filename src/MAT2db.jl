@@ -36,6 +36,7 @@ function process_csv(csvfile; debug = false)
     p = Progress(length(t2), 1, "Processing runs...")
     tracks = progress_map(enumerate(t2), progress=p) do (i, x)
         if debug
+            Memoization.empty_all_caches!();
             try 
                 process_run(x, path, i)
             catch ex
