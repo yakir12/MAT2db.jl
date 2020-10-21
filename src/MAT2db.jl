@@ -35,12 +35,6 @@ function process_csv(csvfile; debug = false)
     mkpath(joinpath(path, "results"))
     p = Progress(length(t2), 1, "Processing runs...")
     tracks = progress_map(enumerate(t2), progress=p) do (i, x)
-        @debug "processing run #$i\n If this fails, please send me the whole error message and if needed, also:" begin
-            x.resfiles
-            x.poi_videofile
-            x.calib_videofile
-            csvfile
-        end
         if debug
             try 
                 process_run(x, path, i)
