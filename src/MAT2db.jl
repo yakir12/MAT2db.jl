@@ -40,7 +40,7 @@ function process_csv(csvfile; debug = false)
             try 
                 process_run(x, path, i)
             catch ex
-                debuging(t[i])
+                debugging(t[i])
             end
         else
             process_run(x, path, i)

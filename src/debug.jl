@@ -1,4 +1,4 @@
-function debuging(ti)
+function debugging(ti)
     tbname, tbio = mktemp(cleanup = false)
     mktempdir() do path
         rowi = NamedTuple(ti)
@@ -13,7 +13,7 @@ function debuging(ti)
         @error "an error has occurred! please send me this file:" tbname
     end
 end
-debuging(csvfile, i) = debuging(loadcsv(csvfile)[i])
+debugging(csvfile, i) = debugging(loadcsv(csvfile)[i])
 
 function debug(tbname)
     tmp = "/home/yakir/tmp2"
