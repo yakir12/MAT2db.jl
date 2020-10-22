@@ -1,6 +1,6 @@
 function debugging(ti)
     tbname, tbio = mktemp(cleanup = false)
-    mktempdir() do path
+    mktempdir(SystemPath) do path
         rowi = NamedTuple(ti)
         tbl = merge(rowi, (resfile = basename(rowi.resfile), poi_videofile = basename(rowi.poi_videofile), calib_videofile = basename(rowi.calib_videofile)))
         CSV.write(joinpath(path, "csvfile.csv"), [tbl])
@@ -8,7 +8,7 @@ function debugging(ti)
         map(unique((rowi.poi_videofile, rowi.calib_videofile))) do file
             cp(file, joinpath(path, basename(file)))
         end
-        Tar.create(path, tbio)
+        Tar.create(string(path), tbio)
         close(tbio)
         @error "an error has occurred! please send me this file:" tbname
     end
