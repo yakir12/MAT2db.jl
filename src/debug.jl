@@ -1,4 +1,4 @@
-function debugging(ti)
+function packit(ti)
     tbname, tbio = mktemp(cleanup = false)
     mktempdir(SystemPath) do path
         rowi = NamedTuple(ti)
@@ -10,10 +10,14 @@ function debugging(ti)
         end
         Tar.create(string(path), tbio)
         close(tbio)
-        @error "an error has occurred! please send me this file:" tbname
+        @info "an error has occurred! please send me this file:" tbname
     end
 end
-debugging(csvfile, i) = debugging(loadcsv(csvfile)[i])
+function debugging(ti, ex::Exception)
+    packit(ti)
+    throw(ex)
+end
+debugging(csvfile, i::Int) = packit(loadcsv(csvfile)[i])
 
 function debug(tbname)
     tmp = "/home/yakir/tmp2"
