@@ -12,7 +12,7 @@ export process_csv
 const pathtype = typeof(Path())
 const csvfile_columns = Dict(:resfile => pathtype, :poi_videofile => pathtype, :poi_names => String, :calib_videofile => pathtype, :extrinsic => Float64, :intrinsic_start => Float64, :intrinsic_stop => Float64, :checker_size => Float64, :nest2feeder => Float64, :azimuth => Float64, :extra_correction => Bool, :turning_point => Float64)
 
-include.(("resfiles.jl", "assertions.jl", "calibrations.jl", "quality.jl", "pois.jl", "tracks.jl", "common.jl", "plots.jl", "stats.jl"))
+include.(("resfiles.jl", "assertions.jl", "calibrations.jl", "quality.jl", "pois.jl", "tracks.jl", "common.jl", "plots.jl", "stats.jl", "debug.jl"))
 
 a_computer_vision_toolbox()
 
@@ -40,19 +40,7 @@ function process_csv(csvfile; debug = false)
             try 
                 process_run(x, path, i)
             catch ex
-                tbname, tbio = mktemp(cleanup = false)
-                mktempdir() do path
-                    rowi = NamedTuple(t[i])
-                    tbl = merge(rowi, (resfile = basename(rowi.resfile), poi_videofile = basename(rowi.poi_videofile), calib_videofile = basename(rowi.calib_videofile)))
-                    CSV.write(joinpath(path, "csvfile.csv"), [tbl])
-                    cp(string(x.resfile), joinpath(path, basename(x.resfile)))
-                    map(unique((x.poi_videofile, x.calib_videofile))) do file
-                        cp(string(file), joinpath(path, basename(file)))
-                    end
-                    Tar.create(path, tbio)
-                    close(tbio)
-                    @error "an error has occurred! please send me this file:" tbname
-                end
+                debuging(t[i])
             end
         else
             process_run(x, path, i)
@@ -121,20 +109,6 @@ end
 
 to_namedtuple(x::T) where {T} = NamedTuple{fieldnames(T)}(ntuple(i -> getfield(x, i), Val(nfields(x))))
 
-
-function debug(tbname)
-    tmp = "/home/yakir/tmp2"
-    for file in readdir(tmp, join = true)
-        if last(splitext(file)) ≠ ".toml"
-            rm(file, force = true, recursive = true)
-        end
-    end
-    files = Tar.extract(tbname)
-    map(readdir(files, join = true)) do file
-        mv(file, joinpath(tmp, basename(file)))
-    end
-    process_csv("csvfile.csv")
-end
 
 end
 
