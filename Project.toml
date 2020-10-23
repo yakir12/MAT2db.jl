@@ -39,7 +39,7 @@ Tar = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
-AbstractPlotting = "0.12"
+AbstractPlotting = "0.12, 0.13"
 AngleBetweenVectors = "0.3"
 CSV = "0.7"
 Combinatorics = "1.0"
