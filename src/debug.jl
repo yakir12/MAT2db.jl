@@ -20,12 +20,14 @@ end
 debugging(csvfile, i::Int) = packit(loadcsv(csvfile)[i])
 
 function debug(tbname)
+    Memoization.empty_all_caches!();
     tmp = "/home/yakir/tmp2"
     for file in readdir(tmp, join = true)
         if last(splitext(file)) ≠ ".toml"
             rm(file, force = true, recursive = true)
         end
     end
+    tbname = download(tbname)
     files = Tar.extract(tbname)
     map(readdir(files, join = true)) do file
         mv(file, joinpath(tmp, basename(file)))

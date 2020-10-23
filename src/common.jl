@@ -28,7 +28,7 @@ getfeeder(x, metadata, nest, dropoff, nest2feeder) = haskey(x, :initialfeeder) ?
                                            getmissingfeeder(x[:guess], metadata[:expected_dropoff], nest, dropoff, nest2feeder)
 
 getpickup(data, ::Missing, _) = missing
-getpickup(data, _, feeder) = haskey(data, :rightdowninitial) ? mean(point(data[k]) for k in (:rightdowninitial, :leftdowninitial, :rightupinitial, :leftupinitial)) : 
+getpickup(data, _, feeder) = haskey(data, :rightdowninitial) ? mean(data[k] for k in (:rightdowninitial, :leftdowninitial, :rightupinitial, :leftupinitial)) : 
                              haskey(data, :initialfeeder) ? data[:initialfeeder] : 
                              get(data, :pickup, feeder)
 
@@ -62,8 +62,8 @@ end
 getfictive_nest(x, metadata, pickup::Missing, nest::Space, dropoff::Missing, _) = nest
 getfictive_nest(x, metadata, pickup::Space, nest::Space, dropoff::Space, _) = nest + dropoff - pickup
 function getfictive_nest(x, metadata, pickup::Missing, nest::Missing, dropoff::Space, nest2feeder)
-    south = point(x[:south])
-    north = point(x[:north])
+    south = x[:south]
+    north = x[:north]
     v = north - south
     azimuth = getazimuth(x, metadata)
     α = atan(v[2], v[1]) + azimuth - π
