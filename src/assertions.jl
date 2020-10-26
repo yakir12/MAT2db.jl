@@ -150,7 +150,7 @@ _get_expected_nest2feeder(nest, ::Missing) = missing
 _get_expected_nest2feeder(::Missing, ::Missing) = missing
 a_expected_nest2feeder(io, ::Missing, nest2feeder::Missing) = nothing
 a_expected_nest2feeder(io, ::Real, nest2feeder::Missing) = println(io, "- it seems like you have expectations on the distance between the nest and feeder, but nest2feeder is missing")
-a_expected_nest2feeder(io, ::Missing, nest2feeder::Real) = println(io, "- it seems like you should have expectations on the distance between the nest and feeder since nest2feeder is not missing")
+a_expected_nest2feeder(io, ::Missing, nest2feeder::Real) = nothing#println(io, "- it seems like you should have expectations on the distance between the nest and feeder since nest2feeder is not missing")
 a_expected_nest2feeder(io, expected_nest2feeder::Real, nest2feeder::Real) = expected_nest2feeder ≈ nest2feeder || println(io, "- nest2feeder, $nest2feeder, is not equal to the distance between the expected nest and feeder locations, $expected_nest2feeder")
 
 a_extra_correction(io, ::Bool) = nothing
