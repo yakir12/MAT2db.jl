@@ -31,7 +31,7 @@ end
 recordit(file, scene) = AbstractPlotting.save("$file.png", scene)
 
 function recordit(poi, file, ind, scene)
-    for (j,i) in enumerate(round.(Int, range(1, stop = length(time(poi)), length = 5)))
+    for (j,i) in enumerate(round.(Int, range(1, stop = length(time(poi)) - 1, length = 5)))
         ind[] = i
         AbstractPlotting.save("$file$j.png", scene)
     end

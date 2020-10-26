@@ -6,7 +6,7 @@ markers = Dict(:turning_point => '•', :center_of_search => '■')
 legendmarkers = OrderedDict(
                             :nest => (color = :black, marker = '⋆', strokecolor = :black, markerstrokewidth = 0.5, strokewidth = 0.5, markersize = 15px),
                             :feeder => (color = :transparent, marker = '•', strokecolor = :black, markerstrokewidth = 0.5, strokewidth = 0.5, markersize = 25px),
-                            :fictive_nest => (color = :white, marker = '⋆', strokecolor = :black, markerstrokewidth = 0.5, strokewidth = 0.5, markersize = 15px),
+                            :fictive_nest => (color = :white, marker = '⋆', strokecolor = :black, markerstrokewidth = 0.5, strokewidth = 0.5, markersize = 10px),
                             :dropoff => (color = :black, marker = '↓', strokecolor = :white, markerstrokewidth = 0.5, strokewidth = 0.1, markersize = 15px),
                             :pickup => (color = :black, marker = '↑', strokecolor = :white, markerstrokewidth = 0.5, strokewidth = 0.1, markersize = 15px),
                             :turning_point => (color = :black, marker = markers[:turning_point], strokecolor = :transparent, markersize = 15px),

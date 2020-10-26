@@ -37,7 +37,9 @@ Create a `.csv` file like [this one](/example/example.csv) (e.g. with Microsoft 
 - The number of names in the `poi_names` column must be equal to the number of columns in the `res` file, even if one (or more) of the columns is empty.
 - `intrinsic_start`, `intrinsic_stop`, `azimuth`, and `turning_point` can be left empty when not relevant.
 - `poi_videofile` and `calib_videofile` can be the exact same file within and between row/s. 
-- The expected locations in `poi_names` should only refer to POIs that you have an actual location for (e.g. a POI that has a column in the `res` file). So for instance, it is not ok to specify `nest 0 0` for a transfer experiment.
+- The expected locations in `poi_names` should only refer to POIs that you have an actual location for (e.g. a POI that has a column in the `res` file). So for instance, it is not OK to specify `nest 0 0` for a transfer experiment, but `fictive_nest 0 0` is.
+- Two expected locations in the `poi_names` can not possibly be identical unless they truly are. In a zero vector experiment, for example, if you meant to pick up the animal (and displace it) at the nest but in reality you picked it up close to the nest, `nest` and `pickup` cannot have identical expected locations. The easiest way to reason about this is, each POI was manually chosen by you when you tracked it (e.g. in `DungTrack`) -- how and why would you click at the exact same coordinate in the image?
+- Do not add a plus sign, `+`, to the expected POI location: `feeder 0 130` is correct while `feeder 0 +130` is not. 
 
 
 ## To run
@@ -113,3 +115,10 @@ Each run has one result image showing the track and POIs oriented so that the ne
 
 Check that:
 - everything looks right.
+
+## To debug
+If you run into some unknown error, run the `process_csv` function in the debug mode:
+```
+process_csv("csvfile.csv", debug = true)
+```
+This will produce a (tarball) file that you can send to me.

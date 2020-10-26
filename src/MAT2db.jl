@@ -1,6 +1,6 @@
 module MAT2db
 
-using FilePathsBase, CoordinateTransformations, ImageTransformations, Memoization, Statistics, Combinatorics, LinearAlgebra, OffsetArrays, StructArrays, StatsBase, Dierckx, AngleBetweenVectors, DataStructures, Missings, ProgressMeter, DataFrames, LabelledArrays, Measurements, ImageCore, Interpolations
+using FilePathsBase, CoordinateTransformations, ImageTransformations, Memoization, Statistics, Combinatorics, LinearAlgebra, OffsetArrays, StructArrays, StatsBase, Dierckx, AngleBetweenVectors, DataStructures, Missings, ProgressMeter, DataFrames, LabelledArrays, Measurements, ImageCore, Interpolations, Tar
 using MATLAB, FileIO
 using MAT, SparseArrays, StaticArrays, CSV
 using AbstractPlotting, GLMakie, FFMPEG, ImageMagick
@@ -14,11 +14,11 @@ export process_csv
 const pathtype = typeof(Path())
 const csvfile_columns = Dict(:resfile => pathtype, :poi_videofile => pathtype, :poi_names => String, :calib_videofile => pathtype, :extrinsic => Float64, :intrinsic_start => Float64, :intrinsic_stop => Float64, :checker_size => Float64, :nest2feeder => Float64, :azimuth => Float64, :extra_correction => Bool, :turning_point => Float64)
 
-include.(("resfiles.jl", "assertions.jl", "calibrations.jl", "quality.jl", "pois.jl", "tracks.jl", "common.jl", "plots.jl", "stats.jl"))
+include.(("resfiles.jl", "assertions.jl", "calibrations.jl", "quality.jl", "pois.jl", "tracks.jl", "common.jl", "plots.jl", "stats.jl", "debug.jl"))
 
 a_computer_vision_toolbox()
 
-function process_csv(csvfile)
+function process_csv(csvfile; debug = false)
     t = loadcsv(csvfile)
     t2 = map(parserow, t)
     ss = check4errors.(t2)
@@ -37,7 +37,16 @@ function process_csv(csvfile)
     mkpath(joinpath(path, "results"))
     p = Progress(length(t2), 1, "Processing runs...")
     tracks = progress_map(enumerate(t2), progress=p) do (i, x)
-        process_run(x, path, i)
+        if debug
+            Memoization.empty_all_caches!();
+            try 
+                process_run(x, path, i)
+            catch ex
+                debugging(t[i], ex)
+            end
+        else
+            process_run(x, path, i)
+        end
     end
     df = DataFrame(torow.(tracks))
     df[:, Not(All(:homing, :searching, :track))]  |> CSV.write(joinpath(path, "results", "data.csv"))
@@ -55,7 +64,6 @@ parse_intrinsic(start, stop) = Intrinsic(start, stop)
 parserow(row) = merge(NamedTuple(row), parsepois(row.poi_names), (; intrinsic = parse_intrinsic(row.intrinsic_start, row.intrinsic_stop)))
 
 @memoize Dict function process_run(x, path, i)
-    @debug "processing run #$i" x
     runi = string(i)
     mkpath(joinpath(path, "quality", "runs", runi))
 
@@ -70,7 +78,7 @@ parserow(row) = merge(NamedTuple(row), parsepois(row.poi_names), (; intrinsic = 
     calibrate!.(values(pois), Ref(calib))
 
     expected = adjust_expected(pois, x.expected_locations)
-    calib2 = build_extra_calibration(Tuple(only(space(pois[k])) for k in keys(expected)), Tuple(values(expected)))
+    calib2 = build_extra_calibration([only(space(pois[k])) for k in keys(expected)], deepcopy(collect(values(expected))))
     plotcalibratedpoi(Dict(k => deepcopy(v) for (k,v) in pois if length(time(v)) == 1), calib, joinpath(path, "quality", "runs", runi), expected, calib2)
 
     if x.extra_correction
@@ -102,6 +110,7 @@ function torow(s)
 end
 
 to_namedtuple(x::T) where {T} = NamedTuple{fieldnames(T)}(ntuple(i -> getfield(x, i), Val(nfields(x))))
+
 
 end
 
