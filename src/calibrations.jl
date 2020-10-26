@@ -181,7 +181,7 @@ function build_extra_calibration(c, e)
     deleteat!(c, k)
     deleteat!(e, k)
     npoints = length(e)
-    if npoints < 2
+    tform = if npoints < 2
         IdentityTransformation()
     elseif npoints < 3
         s = norm(e[2] - e[1])/norm(c[2] - c[1])
@@ -189,6 +189,8 @@ function build_extra_calibration(c, e)
     else
         createAffineMap(c[1:3], e[1:3])
     end
+    itform = inv(tform)
+    (; tform, itform)
 end
 
 function find_collinear(xy)
