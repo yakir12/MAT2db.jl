@@ -59,6 +59,7 @@ end
 function gettpknot(spl)
     ks = Dierckx.get_knots(spl)
     filter!(k -> norm(spl(k) - spl(0)) > ignorefirst, ks)
+    isempty(ks) && return 0.0
     tp2 = gettpindex(spl, ks)
     # return tp2
     tp1 = copy(tp2)
