@@ -21,7 +21,7 @@ function Track(xyt, tp)
     sort!(xyt, by = row -> row.t)
     Δt = mean(trim(diff(xyt.t), prop = 0.1))
     t, xy = filterdance(xyt.xy, Δt)
-    spl = ParametricSpline(t, hcat(xy...); s = 500, k = 2)
+    spl = ParametricSpline(t, hcat(xy...); s = 50, k = 2)
     tl = range(0.0, step = Δt, stop = t[end])
     xyl = Space.(spl.(tl))
     i = findturningpoint(tp, spl, tl, xyt[1].t)
@@ -59,6 +59,7 @@ end
 function gettpknot(spl)
     ks = Dierckx.get_knots(spl)
     filter!(k -> norm(spl(k) - spl(0)) > ignorefirst, ks)
+    isempty(ks) && return 0.0
     tp2 = gettpindex(spl, ks)
     # return tp2
     tp1 = copy(tp2)

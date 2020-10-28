@@ -18,10 +18,15 @@ time(x::POI) = x.xyt.t
 space(x::POI, i) = x.xyt[i].xy
 time(x::POI, i) = x.xyt[i].t
 
+correctedges(x, nframes) = x == nframes ? nframes - 1 :
+                           x == 1 ? 2 :
+                           x
+
 function resfile2coords(resfile, videofile, poi_names)
     matopen(string(resfile)) do io
         xdata = read(io, "xdata")
         fr = read(io, "status")["FrameRate"]
+        nframes = size(xdata, 1)
         rows = rowvals(xdata)
         xvals = nonzeros(xdata)
         yvals = nonzeros(read(io, "ydata"))
@@ -29,7 +34,8 @@ function resfile2coords(resfile, videofile, poi_names)
         for (j, name) in enumerate(poi_names)
             i = nzrange(xdata, j)
             if !isempty(i)
-                pois[name] = POI(xvals[i], yvals[i], rows[i]/fr, videofile)
+                r = map(x -> correctedges(x, nframes), rows[i])
+                pois[name] = POI(xvals[i], yvals[i], r/fr, videofile)
             end
         end
         return pois
