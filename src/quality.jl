@@ -48,7 +48,7 @@ function plotcalibration(calibration::Calibration, calib, file)
     indices, imgw = decompose(calibrate(calib, img))
     image!(ax, indices..., imgw)
     tightlimits!(ax)
-    layout[2,1:2] = LText(scene, "ϵ (±cm) = $(calib.ϵ)")
+    layout[2,1:2] = LText(scene, "ϵ (± pixel) = $(round.(calib.ϵ, digits = 2))")
     AbstractPlotting.save("$file.png", scene)
 end
 
