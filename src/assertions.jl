@@ -34,7 +34,7 @@ function c_poi_names(io, poi_names)
         println(io, "- POI names must be unique")
         good = false
     end
-    if :track ∉ poi_names 
+    if all(!occursin("track", String(name)) for name in poi_names)
         println(io, "- a track POI is missing")
         good = false
     end
