@@ -1,2 +1,2 @@
-resfile,poi_videofile,poi_names,calib_videofile,extrinsic,intrinsic_start,intrinsic_stop,checker_size,nest2feeder,azimuth,extra_correction
-20181121_02_left.res,20181121_02_left.mov,"nest 0 0,initialfeeder 0 -130,feeder 50 -130,track,pellet",20181121_02_left.mov,582.835,,,3.9,130,,false
+resfile,poi_videofile,poi_names,calib_videofile,extrinsic,intrinsic_start,intrinsic_stop,checker_size,nest2feeder,azimuth,extra_correction,turning_point
+20181121_02_left.res,20181121_02_left.mov,"nest 0 0,initialfeeder 0 -130,feeder 50 -130,track,pellet",20181121_02_left.mov,582.835,,,3.9,130,,false,
