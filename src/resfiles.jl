@@ -33,7 +33,7 @@ function resfile2coords(resfile, videofile, poi_names)
         pois = Dict{Symbol, POI}()
         for (j, name) in enumerate(poi_names)
             i = nzrange(xdata, j)
-            if !isempty(i)
+            if !isempty(i) && !all(isnumeric, String(name))
                 r = map(x -> correctedges(x, nframes), rows[i])
                 pois[name] = POI(xvals[i], yvals[i], r/fr, videofile)
             end

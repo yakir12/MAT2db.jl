@@ -30,4 +30,11 @@ function plotrun(x)
     scene
 end
 
-
+function plotrun_of_tracks(x)
+    scene, layout = layoutscene()
+    ax = layout[1,1] = LAxis(scene, aspect = DataAspect(), xlabel = "X (cm)", ylabel = "Y (cm)")#, yreversed = true)
+    for (k,v) in x
+        lines!(ax, space(v))
+    end
+    scene
+end

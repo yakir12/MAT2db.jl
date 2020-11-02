@@ -8,8 +8,7 @@ using AbstractPlotting.MakieLayout
 
 using CameraCalibrations
 
-export process_csv
-
+export process_csv, process_run, process_run_of_tracks
 
 const pathtype = typeof(Path())
 const csvfile_columns = Dict(:resfile => pathtype, :poi_videofile => pathtype, :poi_names => String, :calib_videofile => pathtype, :extrinsic => Float64, :intrinsic_start => Float64, :intrinsic_stop => Float64, :checker_size => Float64, :nest2feeder => Float64, :azimuth => Float64, :extra_correction => Bool, :turning_point => Float64)
@@ -18,7 +17,7 @@ include.(("resfiles.jl", "assertions.jl", "calibrations.jl", "quality.jl", "pois
 
 a_computer_vision_toolbox()
 
-function process_csv(csvfile; debug = false)
+function process_csv(csvfile; debug = false, fun = process_run)
     t = loadcsv(csvfile)
     t2 = map(parserow, t)
     ss = check4errors.(t2)
@@ -40,12 +39,12 @@ function process_csv(csvfile; debug = false)
         if debug
             Memoization.empty_all_caches!();
             try 
-                process_run(x, path, i)
+                fun(x, path, i)
             catch ex
                 debugging(t[i], ex)
             end
         else
-            process_run(x, path, i)
+            fun(x, path, i)
         end
     end
     df = DataFrame(torow.(tracks))
@@ -79,7 +78,8 @@ parserow(row) = merge(NamedTuple(row), parsepois(row.poi_names), (; intrinsic = 
 
     expected = adjust_expected(pois, x.expected_locations)
     calib2 = build_extra_calibration([only(space(pois[k])) for k in keys(expected)], deepcopy(collect(values(expected))))
-    plotcalibratedpoi(Dict(k => deepcopy(v) for (k,v) in pois if length(time(v)) == 1), calib, joinpath(path, "quality", "runs", runi), expected, calib2)
+    calib_poi2plot = Dict(k => deepcopy(v) for (k,v) in pois if length(time(v)) == 1)
+    plotcalibratedpoi(calib_poi2plot, calib, joinpath(path, "quality", "runs", runi), expected, calib2)
 
     if x.extra_correction
         calibrate!.(values(pois), Ref(calib2))
@@ -89,7 +89,7 @@ parserow(row) = merge(NamedTuple(row), parsepois(row.poi_names), (; intrinsic = 
     coords = Dict{Symbol, AbstractArray{T,1} where T}(k => k ∈ (:track, :pellet) ? v.xyt : only(space(v)) for (k,v) in pois if !ismissing(v))
 
 
-    metadata = Dict(:nest2feeder => x.nest2feeder, :azimuth => x.azimuth, :turning_point => x.turning_point)
+    metadata = Dict{Symbol, Any}(:nest2feeder => x.nest2feeder, :azimuth => x.azimuth, :turning_point => x.turning_point)
     if haskey(x.expected_locations, :dropoff)
         metadata[:expected_dropoff] = x.expected_locations[:dropoff]
     end
@@ -105,11 +105,40 @@ end
 
 function torow(s)
     fs = (:homing, :searching , :center_of_search, :turning_point, :nest, :feeder)
+    if any(!haskey(s, k) for k in fs)
+        return (; (f => missing for f in fs)..., track = missing)
+    end
     xs = map(f -> getproperty(s,f), fs)
     return merge(to_namedtuple(s), NamedTuple{fs}(xs), speedstats(s.track))
 end
 
 to_namedtuple(x::T) where {T} = NamedTuple{fieldnames(T)}(ntuple(i -> getfield(x, i), Val(nfields(x))))
+
+
+@memoize Dict function process_run_of_tracks(x, path, i)
+    runi = string(i)
+    mkpath(joinpath(path, "quality", "runs", runi))
+
+    pois = resfile2coords(x.resfile, x.poi_videofile, x.poi_names)
+    for (k, v) in pois
+        plotrawpoi(v, joinpath(path, "quality", "runs", runi,  String(k)))
+    end
+
+    calibration = Calibration(x.calib_videofile, x.extrinsic, x.intrinsic, x.checker_size)
+    calib = build_calibration(calibration)
+    plotcalibration(calibration, calib, joinpath(path, "quality", "calibrations", string(basename(calibration.video), calibration.extrinsic)))
+    calibrate!.(values(pois), Ref(calib))
+
+    flipy!(pois)
+
+    scene = plotrun_of_tracks(pois)
+    AbstractPlotting.save(joinpath(path, "results", "$runi.png"), scene)
+
+    return pois
+
+end
+
+
 
 
 end

@@ -34,7 +34,7 @@ function c_poi_names(io, poi_names)
         println(io, "- POI names must be unique")
         good = false
     end
-    if :track ∉ poi_names 
+    if all(!occursin("track", String(name)) for name in poi_names)
         println(io, "- a track POI is missing")
         good = false
     end
@@ -84,6 +84,10 @@ function a_coords(io, resfile::SystemPath, poi_names::Vector{Symbol}, duration::
         nf = read(mio, "status")["nFrames"]
         duration2 = nf/fr
         isapprox(duration2, duration, atol = 1) || println(io, "- the duration of the POI video file, $duration s, and the one reported in the res file, $duration2 s, are not the same")
+        if npois > n
+            println(io, "- there are more POIs ($npois) than there are columns in the res file ($n)")
+            return nothing
+        end
         for (j, name) in enumerate(poi_names)
             i = nzrange(xdata, j)
             if !isempty(i)
