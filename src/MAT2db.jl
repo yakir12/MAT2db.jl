@@ -103,14 +103,13 @@ parserow(row) = merge(NamedTuple(row), parsepois(row.poi_names), (; intrinsic = 
 
 end
 
-function torow(s)
+function torow(s::Standardized)
     fs = (:homing, :searching , :center_of_search, :turning_point, :nest, :feeder)
-    if any(!haskey(s, k) for k in fs)
-        return (; (f => missing for f in fs)..., track = missing)
-    end
     xs = map(f -> getproperty(s,f), fs)
     return merge(to_namedtuple(s), NamedTuple{fs}(xs), speedstats(s.track))
 end
+
+torow(s::Dict) = (; (f => missing for f in (:homing, :searching , :center_of_search, :turning_point, :nest, :feeder))..., track = missing)
 
 to_namedtuple(x::T) where {T} = NamedTuple{fieldnames(T)}(ntuple(i -> getfield(x, i), Val(nfields(x))))
 
