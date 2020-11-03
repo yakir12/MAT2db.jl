@@ -9,22 +9,27 @@ function getimg(file, t)
 end
 
 function plotrawpoi(poi::POI, file)
-    scene, layout = layoutscene(0)
-    ax = layout[1,1] = LAxis(scene, aspect = DataAspect(), yreversed = true, xlabel = "X (pixel)", ylabel = "Y (pixel)")
     ind = Node(1)
     img = lift(ind) do i
         getimg(poi.video, time(poi, i))
     end
+    timestamp = lift(ind) do i
+        string("time stamp: ", round(time(poi)[i], digits = 3), " sec")
+    end
     spot = lift(ind) do i
         space(poi, i)
     end
+    scene, layout = layoutscene(0)
+    ax = layout[1,1] = LAxis(scene, aspect = DataAspect(), yreversed = true, xlabel = "X (pixel)", ylabel = "Y (pixel)", title = timestamp)
     image!(ax, img)
+    # layout[0, :] = LText(scene, timestamp)
     scatter!(ax, spot, color = :transparent, strokecolor = :red, strokewidth = 3)
     tightlimits!(ax)
     if length(time(poi)) == 1
         recordit(file, scene)
     else
         recordit(poi, file, ind, scene)
+        recordmovie(poi, file, ind, scene)
     end
 end
 
@@ -35,6 +40,14 @@ function recordit(poi, file, ind, scene)
         ind[] = i
         AbstractPlotting.save("$file$j.png", scene)
     end
+end
+
+function recordmovie(poi, file, ind, scene)
+    AbstractPlotting.inline!(true)
+    record(scene, "$file.mp4", eachindex(time(poi))) do i
+        ind[] = i
+    end
+    AbstractPlotting.inline!(false)
 end
 
 decompose(imgw) = (UnitRange.(axes(imgw)), parent(imgw))
