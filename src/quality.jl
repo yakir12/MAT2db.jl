@@ -29,7 +29,7 @@ function plotrawpoi(poi::POI, file)
         recordit(file, scene)
     else
         recordit(poi, file, ind, scene)
-        recordmovie(poi, file, ind, scene)
+        # recordmovie(poi, file, ind, scene)
     end
 end
 
