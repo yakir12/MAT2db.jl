@@ -77,7 +77,7 @@ function a_coords(io, resfile::SystemPath, poi_names::Vector{Symbol}, duration::
         nmax = maximum(npoints)
         nmax > 5 || println(io, "- res file missing a POI with more than 5 data points (e.g. a track)")
         npois = length(poi_names)
-        npois == n || println(io, "- number of POIs, $npois, doesn't match the number of res columns, $n")
+        # npois == n || println(io, "- number of POIs, $npois, doesn't match the number of res columns, $n")
         rows = rowvals(xdata)
         fr = read(mio, "status")["FrameRate"]
         haskey(read(mio, "status"), "nFrames") || println(io,  "- resfile missing number of total frames")
