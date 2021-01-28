@@ -14,8 +14,12 @@ legendmarkers = OrderedDict(
                             :pellets => (color = :black, marker = '▴', strokecolor = :black, markerstrokewidth = 0.5, strokewidth = 0.5, markersize = 15px),
                                           )
 function plotrun(x)
-    scene, layout = layoutscene()
-    ax = layout[1,1] = LAxis(scene, aspect = DataAspect(), xlabel = "X (cm)", ylabel = "Y (cm)")#, yreversed = true)
+
+    fig = Figure()
+    ax = fig[1, 1] = Axis(fig, aspect = DataAspect(), xlabel = "X (cm)", ylabel = "Y (cm)")
+
+    # scene, layout = layoutscene()
+    # ax = layout[1,1] = LAxis(scene, aspect = DataAspect(), xlabel = "X (cm)", ylabel = "Y (cm)")#, yreversed = true)
     h = OrderedDict()
     for (k,v) in legendlines
         h[k] = lines!(ax, getproperty(x, k); v...)
@@ -26,15 +30,17 @@ function plotrun(x)
             h[k] = scatter!(ax, xy; v...)
         end
     end
-    layout[0,1] = LLegend(scene, collect(values(h)), string.(keys(h)), orientation = :vertical, nbanks = 5, tellheight = true, height = Auto(), groupgap = 30);
-    scene
+    fig[0,1] = Legend(fig, collect(values(h)), string.(keys(h)), orientation = :vertical, nbanks = 5, tellheight = true, height = Auto(), groupgap = 30);
+    fig
 end
 
 function plotrun_of_tracks(x)
-    scene, layout = layoutscene()
-    ax = layout[1,1] = LAxis(scene, aspect = DataAspect(), xlabel = "X (cm)", ylabel = "Y (cm)")#, yreversed = true)
+    fig = Figure()
+    ax = fig[1, 1] = Axis(fig, aspect = DataAspect(), xlabel = "X (cm)", ylabel = "Y (cm)")
+    # scene, layout = layoutscene()
+    # ax = layout[1,1] = LAxis(scene, aspect = DataAspect(), xlabel = "X (cm)", ylabel = "Y (cm)")#, yreversed = true)
     for (k,v) in x
         lines!(ax, space(v))
     end
-    scene
+    fig
 end
