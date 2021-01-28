@@ -35,12 +35,12 @@ function plotrawpoi(poi::POI, file)
     end
 end
 
-recordit(file, scene) = AbstractPlotting.save("$file.png", scene)
+recordit(file, scene) = save("$file.png", scene)
 
 function recordit(poi, file, ind, scene)
     for (j,i) in enumerate(round.(Int, range(1, stop = length(time(poi)) - 1, length = 5)))
         ind[] = i
-        AbstractPlotting.save("$file$j.png", scene)
+        save("$file$j.png", scene)
     end
 end
 
@@ -67,7 +67,7 @@ function plotcalibration(calibration::Calibration, calib, file)
     image!(ax, indices..., imgw)
     tightlimits!(ax)
     fig[2,1:2] = Label(fig, "ϵ (± pixel) = $(round.(calib.ϵ, digits = 2))")
-    AbstractPlotting.save("$file.png", fig)
+    save("$file.png", fig)
 end
 
 function _label_position_distances(ps)
@@ -129,7 +129,7 @@ function plotcalibratedpoi(pois, calib, file, expected_locations, calib2)
     hidexdecorations!(ax1, ticklabels = false, ticks = false, grid = false)
     hidexdecorations!(ax2, ticklabels = false, ticks = false, grid = false)
     fig[2,1:2] = Label(fig, "X (cm)")
-    AbstractPlotting.save(joinpath(file, "calibrated POIs.png"), fig)
+    save(joinpath(file, "calibrated POIs.png"), fig)
 end
 
 

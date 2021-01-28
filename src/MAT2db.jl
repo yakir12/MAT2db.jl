@@ -3,8 +3,7 @@ module MAT2db
 using FilePathsBase, CoordinateTransformations, ImageTransformations, Memoization, Statistics, Combinatorics, LinearAlgebra, OffsetArrays, StructArrays, StatsBase, Dierckx, AngleBetweenVectors, DataStructures, Missings, ProgressMeter, DataFrames, LabelledArrays, Measurements, ImageCore, Interpolations, Tar
 using MATLAB, FileIO
 using MAT, SparseArrays, StaticArrays, CSV
-using AbstractPlotting, GLMakie, FFMPEG, ImageMagick
-using AbstractPlotting.MakieLayout
+using GLMakie, FFMPEG, ImageMagick
 
 using CameraCalibrations
 
@@ -97,7 +96,7 @@ parserow(row) = merge(NamedTuple(row), parsepois(row.poi_names), (; intrinsic = 
     z = common(coords, metadata)
     s = Standardized(z)
     scene = plotrun(s)
-    AbstractPlotting.save(joinpath(path, "results", "$runi.png"), scene)
+    save(joinpath(path, "results", "$runi.png"), scene)
 
     return s
 
@@ -131,7 +130,7 @@ to_namedtuple(x::T) where {T} = NamedTuple{fieldnames(T)}(ntuple(i -> getfield(x
     flipy!(pois)
 
     scene = plotrun_of_tracks(pois)
-    AbstractPlotting.save(joinpath(path, "results", "$runi.png"), scene)
+    save(joinpath(path, "results", "$runi.png"), scene)
 
     return pois
 
