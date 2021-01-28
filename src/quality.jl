@@ -84,13 +84,13 @@ function _plotpoic(ax, indices, img, poic, expected_locations)
     ps = [Pair(only(p1), only(p2)) for (p1, p2) in combinations(space.(values(poic)), 2)]
     lps = _label_position_distances.(ps)
     # textlayer = textlayer!(ax)
-    # annotations!(textlayer, ax, first.(lps), last.(lps), color = :yellow, align = (:center, :center), textsize = 12)#, rotation = π/6)
+    annotations(first.(lps), Point2f0.(last.(lps)), color = :yellow, align = (:center, :center), textsize = 12)#, rotation = π/6)
     linesegments!(ax, ps, color = :white)
     opts = (marker = '+', color = :red, strokewidth = 0, markersize = 6)
     scatter!(ax, only.(space.(values(poic))); opts..., color = :green)
     labels = String.(keys(poic))
     pos = [Point(only(space(xy)) .- (0, 5)) for xy in values(poic)]
-    # annotations!(textlayer, ax, labels, pos, color = :yellow, align = (:center, :bottom), textsize = 12)#, rotation = π/6)
+    annotations!(labels, pos, color = :yellow, align = (:center, :bottom), textsize = 12)#, rotation = π/6)
     if !isempty(expected_locations)
         scatter!(ax, Point.(values(expected_locations)); opts...)
     end
@@ -135,12 +135,12 @@ end
 
 
 
-# function textlayer!(ax::LAxis)
+# function textlayer!(ax::Axis)
 #     pxa = lift(AbstractPlotting.zero_origin, ax.scene.px_area)
 #     Scene(ax.scene, pxa, raw = true, camera = campixel!)
 # end
 #
-# function AbstractPlotting.annotations!(textlayer::Scene, ax::LAxis, texts, positions; kwargs...)
+# function AbstractPlotting.annotations!(textlayer::Figure, ax::Axis, texts, positions; kwargs...)
 #     positions = positions isa Observable ? positions : Observable(positions)
 #     screenpositions = lift(positions, ax.scene.camera.projectionview, ax.scene.camera.pixel_space) do positions, pv, pspace
 #         p4s = to_ndim.(Vec4f0, to_ndim.(Vec3f0, positions, 0.0), 1.0)

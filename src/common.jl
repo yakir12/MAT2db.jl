@@ -40,14 +40,14 @@ getdropoff(data) = haskey(data, :rightdownfinal) ? mean(data[k] for k in (:right
 getnest2feeder(x, metadata) = haskey(x, :nestbefore) ? norm(x[:nestbefore] - x[:feederbefore]) :
                     get(metadata, :nest2feeder, missing)
 
-function ayse_fix!(x)
-    if !haskey(x, :feeder) && !haskey(x, :guess)
-        x[:feeder] = first(x[:track]).xy
-    end
-end
+# function ayse_fix!(x)
+#     if !haskey(x, :feeder) && !haskey(x, :guess)
+#         x[:feeder] = first(x[:track]).xy
+#     end
+# end
 
 function getdata(x, metadata)
-    ayse_fix!(x)
+    # ayse_fix!(x)
     nest = get(x, :nest, missing)
     track = Track(x[:track], metadata[:turning_point])
     _pellet = get(x, :pellet, StructVector{SpaceTime}(undef, 0))
