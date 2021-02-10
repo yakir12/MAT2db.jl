@@ -1,4 +1,5 @@
 struct Common
+    runid::String
     feeder::Space
     fictive_nest::Space
     track::Track
@@ -62,7 +63,7 @@ end
 function common(x, metadata)
     feeder, nest, track, pellet, pickup, dropoff, nest2feeder = getdata(x, metadata)
     fictive_nest = getfictive_nest(x, metadata, pickup, nest, dropoff, nest2feeder)
-    Common(feeder, fictive_nest, track, pellet, nest, pickup, dropoff)
+    Common(metadata[:runid], feeder, fictive_nest, track, pellet, nest, pickup, dropoff)
 end
 
 getfictive_nest(x, metadata, pickup::Missing, nest::Space, dropoff::Missing, _) = nest
@@ -105,6 +106,7 @@ getazimuth(x, metadata) = haskey(x, :southbefore) ? anglebetween(x[:northbefore]
 ######################### END ######################
 
 struct Standardized
+    runid::String
     nest2feeder::Float64
     fictive_nest::Space
     track::Track
@@ -129,7 +131,7 @@ function Standardized(x)
     pickup = t(x.pickup)
     dropoff = t(x.dropoff)
     nest2feeder = abs(last(t(x.feeder)))
-    Standardized(nest2feeder, fictive_nest, x.track, x.pellets, pickup, dropoff)
+    Standardized(x.runid, nest2feeder, fictive_nest, x.track, x.pellets, pickup, dropoff)
 end
 
 get_center(::Missing, fictive_nest) = fictive_nest

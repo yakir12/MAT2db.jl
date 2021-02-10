@@ -1,9 +1,10 @@
 module MAT2db
 
-using FilePathsBase, CoordinateTransformations, ImageTransformations, Memoization, Statistics, Combinatorics, LinearAlgebra, OffsetArrays, StructArrays, StatsBase, Dierckx, AngleBetweenVectors, DataStructures, Missings, ProgressMeter, DataFrames, LabelledArrays, Measurements, ImageCore, Interpolations, Tar
+using FilePathsBase, CoordinateTransformations, ImageTransformations, Memoization, Statistics, Combinatorics, LinearAlgebra, OffsetArrays, StructArrays, StatsBase, Dierckx, AngleBetweenVectors, DataStructures, Missings, ProgressMeter, DataFrames, LabelledArrays, Measurements, ImageCore, Interpolations, Tar, OnlineStats
 using MATLAB, FileIO
 using MAT, SparseArrays, StaticArrays, CSV
 using GLMakie, FFMPEG, ImageMagick
+using OnlineStats
 
 using CameraCalibrations
 
@@ -62,7 +63,7 @@ parse_intrinsic(start, stop) = Intrinsic(start, stop)
 parserow(row) = merge(NamedTuple(row), parsepois(row.poi_names), (; intrinsic = parse_intrinsic(row.intrinsic_start, row.intrinsic_stop)))
 
 @memoize Dict function process_run(x, path, i)
-    runi = string(i)
+    runi = FilePathsBase.filename(x.resfile)#string(i)
     mkpath(joinpath(path, "quality", "runs", runi))
 
     pois = resfile2coords(x.resfile, x.poi_videofile, x.poi_names)
@@ -88,7 +89,7 @@ parserow(row) = merge(NamedTuple(row), parsepois(row.poi_names), (; intrinsic = 
     coords = Dict{Symbol, AbstractArray{T,1} where T}(k => k ∈ (:track, :pellet) ? v.xyt : only(space(v)) for (k,v) in pois if !ismissing(v))
 
 
-    metadata = Dict{Symbol, Any}(:nest2feeder => x.nest2feeder, :azimuth => x.azimuth, :turning_point => x.turning_point)
+    metadata = Dict{Symbol, Any}(:nest2feeder => x.nest2feeder, :azimuth => x.azimuth, :turning_point => x.turning_point, :runid => FilePathsBase.filename(x.resfile))
     if haskey(x.expected_locations, :dropoff)
         metadata[:expected_dropoff] = x.expected_locations[:dropoff]
     end
@@ -105,7 +106,7 @@ end
 function torow(s::Standardized)
     fs = (:homing, :searching , :center_of_search, :turning_point, :nest, :feeder)
     xs = map(f -> getproperty(s,f), fs)
-    return merge(to_namedtuple(s), NamedTuple{fs}(xs), speedstats(s.track))
+    return merge(to_namedtuple(s), NamedTuple{fs}(xs), speedstats(s.track), directionstats(s.track, s.dropoff))
 end
 
 torow(s::Dict) = (; (f => missing for f in (:homing, :searching , :center_of_search, :turning_point, :nest, :feeder))..., track = missing)
