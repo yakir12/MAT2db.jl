@@ -67,7 +67,7 @@ function build_extra_calibration(c, e)
         IdentityTransformation()
     elseif npoints < 3
         s = norm(e[2] - e[1])/norm(c[2] - c[1])
-        LinearMap(Diagonal(SVector(s, s)))
+        LinearMap(SDiagonal(s, s))
     else
         createAffineMap(c[1:3], e[1:3])
     end

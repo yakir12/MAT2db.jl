@@ -115,6 +115,12 @@ function plotcalibratedpoi(pois, calib, file, expected_locations, calib2)
     # imgw = warp(imgw, inv(calib2), indices)
     # indices = parent.(axes(imgw))
     # imgw = parent(imgw)
+    #
+    @show calib2.tform
+    @show typeof(calib2.tform)
+    @show typeof(imgww)
+    # @show calib2.itform
+    # @show typeof(calib2.itform)
     indices, imgw = decompose(calibrate(calib2, imgww))
     ax2 = fig[1, 2] = Axis(fig, aspect = DataAspect(), yreversed = true, xlabel = "X (cm)", ylabel = "Y (cm)", title = "& corrected", backgroundcolor = :black)
     # ax2 = layout[1,2] = LAxis(scene, aspect = DataAspect(), yreversed = true, xlabel = "X (cm)", ylabel = "Y (cm)", title = "& corrected", backgroundcolor = :black)

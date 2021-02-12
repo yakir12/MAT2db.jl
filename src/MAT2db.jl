@@ -38,11 +38,13 @@ function process_csv(csvfile; debug = false, fun = process_run)
     tracks = progress_map(enumerate(t2), progress=p) do (i, x)
         if debug
             Memoization.empty_all_caches!();
-            try 
+            ex = try 
                 fun(x, path, i)
+                nothing
             catch ex
-                debugging(t[i], ex)
+                ex
             end
+            debugging(t[i], ex)
         else
             fun(x, path, i)
         end
