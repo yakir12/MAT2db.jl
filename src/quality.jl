@@ -116,9 +116,10 @@ function plotcalibratedpoi(pois, calib, file, expected_locations, calib2)
     # indices = parent.(axes(imgw))
     # imgw = parent(imgw)
     #
-    @show calib2.tform
-    @show typeof(calib2.tform)
-    @show typeof(imgww)
+    # @show calib2.tform
+    # @show typeof(calib2.tform)
+    # @show typeof(imgww)
+    # @show axes(imgww)
     # @show calib2.itform
     # @show typeof(calib2.itform)
     indices, imgw = decompose(calibrate(calib2, imgww))

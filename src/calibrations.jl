@@ -29,7 +29,7 @@ end
 function extract(intrinsic::Intrinsic, video, path)
     ss, t2 = intrinsic
     t = t2 - ss
-    r = 1#80/t
+    r = 25/t
     files = joinpath(path, "intrinsic%03d.png")
     ffmpeg_exe(`-loglevel 8 -ss $ss -i $video -t $t -r $r -vf format=gray,yadif=1,scale=sar"*"iw:ih -pix_fmt gray $files`)
     readdir(path, join = true)
@@ -67,7 +67,8 @@ function build_extra_calibration(c, e)
         IdentityTransformation()
     elseif npoints < 3
         s = norm(e[2] - e[1])/norm(c[2] - c[1])
-        LinearMap(SDiagonal(s, s))
+        # LinearMap(SDiagonal(s, s))
+        LinearMap(UniformScaling(s))
     else
         createAffineMap(c[1:3], e[1:3])
     end
