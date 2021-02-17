@@ -73,7 +73,7 @@ function getfictive_nest(x, metadata, pickup::Missing, nest::Missing, dropoff::S
     north = x[:north]
     v = north - south
     azimuth = getazimuth(x, metadata)
-    α = atan(v[2], v[1]) + azimuth - π
+    α = atan(v[2], v[1]) - azimuth# - π
     u = Space(cos(α), sin(α))
     return dropoff + u*nest2feeder
 end
