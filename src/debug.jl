@@ -17,7 +17,7 @@ function debugging(ti, ex::Exception)
     packit(ti)
     throw(ex)
 end
-debugging(csvfile, i::Int) = packit(loadcsv(csvfile)[i])
+debugging(csvfile, i::Int; delim = nothing) = packit(loadcsv(csvfile, delim)[i])
 
 function debug(tbname)
     Memoization.empty_all_caches!();
