@@ -17,8 +17,8 @@ include.(("resfiles.jl", "assertions.jl", "calibrations.jl", "quality.jl", "pois
 
 a_computer_vision_toolbox()
 
-function process_csv(csvfile; debug = false, fun = process_run)
-    t = loadcsv(csvfile)
+function process_csv(csvfile; debug = false, fun = process_run, delim = nothing)
+    t = loadcsv(csvfile, delim)
     t2 = map(parserow, t)
     ss = check4errors.(t2)
     io = IOBuffer()
@@ -51,9 +51,9 @@ function process_csv(csvfile; debug = false, fun = process_run)
     df[:, Not(All(:homing, :searching, :track))]  |> CSV.write(joinpath(path, "results", "data.csv"))
 end
 
-function loadcsv(file)
+function loadcsv(file, delim)
     a_csvfile(file)
-    t = CSV.File(file, normalizenames = true, types = csvfile_columns)#, delim=';')
+    t = CSV.File(file, normalizenames = true, types = csvfile_columns, delim = delim)
     a_table(t)
     return t
 end
