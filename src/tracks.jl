@@ -15,7 +15,10 @@ function findturningpoint(::Missing, spl, tl, _)
     i
 end
 
-findturningpoint(t, _, tl, t₀) = findfirst(≥(t - t₀), tl)
+function findturningpoint(t, _, tl, t₀) 
+    i = findfirst(≥(t - t₀), tl)
+    return isnothing(i) ? length(tl) : i
+end
 
 function Track(xyt, tp)
     sort!(xyt, by = row -> row.t)
