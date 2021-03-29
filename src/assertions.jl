@@ -55,7 +55,13 @@ function a_expected_locations(io, expected_locations, poi_names, npoints)
     for (k, v) in expected_locations
         i = findfirst(==(k), poi_names)
         n = npoints[i]
-        n == 1 || println(io, "- you expected $k to be at $v, yet there are $n lines in its column (column #$i) in the res-file")
+        n == 1 || println(io, "- you expected $k to be at $v, yet there are $n lines in its column (column #$i) in the res-file (instead of just one)")
+    end
+end
+
+a_singular_pois(io, poi_names, npoints) = map(poi_names, npoints) do name, n
+    if n ≠ 1 && name ∈ (:feeder, :pickup, :dropoff, :nest, :north, :south)
+        println(io, "- $name is expected to have exactly one row (point) in its res file, yet it has $n rows")
     end
 end
 
@@ -73,6 +79,7 @@ function a_coords(io, resfile::SystemPath, poi_names::Vector{Symbol}, duration::
         n = size(xdata, 2)
         npoints = [length(nzrange(xdata, j)) for j in 1:n]
         a_expected_locations(io, expected_locations, poi_names, npoints)
+        a_singular_pois(io, poi_names, npoints)
         !all(iszero, npoints) || println(io, "- res file is empty")
         nmax = maximum(npoints)
         nmax > 5 || println(io, "- res file missing a POI with more than 5 data points (e.g. a track)")

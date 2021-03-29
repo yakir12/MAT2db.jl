@@ -21,7 +21,7 @@ debugging(csvfile, i::Int; delim = nothing) = packit(loadcsv(csvfile, delim)[i])
 
 function debug(tbname)
     Memoization.empty_all_caches!();
-    tmp = "/home/yakir/tmp2"
+    tmp = pwd()
     for file in readdir(tmp, join = true)
         if last(splitext(file)) ≠ ".toml"
             rm(file, force = true, recursive = true)
