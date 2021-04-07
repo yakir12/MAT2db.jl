@@ -126,6 +126,6 @@ This will produce a (tarball) file that you can send to me.
 
 If you want to send me a single run for inspection (even if it didn't error), use:
 ```julia
-debugging(csvfile, i)
+MAT2db.debugging(csvfile, i)
 ```
 where `i` is the row number (excluding the title row in the csv file) of the run you want to send.
