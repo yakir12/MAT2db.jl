@@ -49,12 +49,12 @@ First use the package:
 using MAT2db
 ```
 and then run the main function, where `<full_file_path>` is the full path to the `csv` file surrounded by quotation marks, `"` (e.g. `"/home/yakir/tmp/example.csv"`):
-```
+```julia
 process_csv(<full_file_path>)
 ```
 
 This will first check for any errors in your files. Read any error messages to discover what went wrong, for instance:
-```
+```julia
 ERROR: 
 Run #3
 - intrinsic time-stamp is not in the video
@@ -119,7 +119,13 @@ Check that:
 
 ## To debug
 If you run into some unknown error, run the `process_csv` function in the debug mode:
-```
+```julia
 process_csv("csvfile.csv", debug = true)
 ```
 This will produce a (tarball) file that you can send to me.
+
+If you want to send me a single run for inspection (even if it didn't error), use:
+```julia
+debugging(csvfile, i)
+```
+where `i` is the row number (excluding the title row in the csv file) of the run you want to send.
