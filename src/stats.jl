@@ -1,5 +1,5 @@
 function speedstats(xy, Δt)
-    if length(xy) < 10
+    if length(xy) < 2
         return missing
     end
     l = norm.(diff(xy))
@@ -24,7 +24,7 @@ function coordinate2group(xy)
 end
 
 function directionstats(xy, dropoff)
-    if length(xy) < 10
+    if length(xy) < 2
         return missing
     end
     ss = [[Mean(), Mean()] for _ in 1:nintervals]
@@ -32,6 +32,12 @@ function directionstats(xy, dropoff)
         g = coordinate2group(xy[i] - dropoff)
         fit!.(ss[g], LinearAlgebra.normalize(xy[i] - xy[i-1]))
     end
-    [OnlineStats.nobs(s[1]) > 0 ? atand(reverse(value.(s))...) : missing for s in ss]
+    # [OnlineStats.nobs(s[1]) > 0 ? atand(reverse(value.(s))...) : missing for s in ss]
+    [OnlineStats.nobs(s[1]) > 0 ? rad2deg(angular_diff_from_pos_y_axis(value.(s))) : missing for s in ss]
 end
 directionstats(track::Track, dropoff) = (; (Symbol(k, :direction) => directionstats(getproperty(track, k), dropoff) for k in (:homing, :searching))...)
+
+function angular_diff_from_pos_y_axis(u)
+    α = π/2 - atan(reverse(u)...)
+    return α > π ? α - 2π : α
+end

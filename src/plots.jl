@@ -15,7 +15,7 @@ legendmarkers = OrderedDict(
                                           )
 function plotrun(x)
 
-    fig = Figure()
+    fig = Figure(resolution = (1000,1000))
     ax = fig[1, 1] = Axis(fig, aspect = DataAspect(), xlabel = "X (cm)", ylabel = "Y (cm)")
 
     # scene, layout = layoutscene()
@@ -31,6 +31,10 @@ function plotrun(x)
         end
     end
     fig[0,1] = Legend(fig, collect(values(h)), string.(keys(h)), orientation = :vertical, nbanks = 5, tellheight = true, height = Auto(), groupgap = 30);
+
+    for radius in intervals
+        lines!(ax, Circle(Point(x.dropoff), radius), color = :red)
+    end
     fig
 end
 
