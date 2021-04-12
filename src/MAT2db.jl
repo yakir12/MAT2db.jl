@@ -106,7 +106,7 @@ end
 function torow(s::Standardized)
     fs = (:homing, :searching , :center_of_search, :turning_point, :nest, :feeder)
     xs = map(f -> getproperty(s,f), fs)
-    return merge(to_namedtuple(s), NamedTuple{fs}(xs), speedstats(s.track), directionstats(s.track, s.dropoff))
+    return merge(to_namedtuple(s), NamedTuple{fs}(xs), speedstats(s.track), directionstats(s.track, s.dropoff), dropoff2tp(s.track, s.dropoff))
 end
 
 torow(s::Dict) = (; (f => missing for f in (:homing, :searching , :center_of_search, :turning_point, :nest, :feeder))..., track = missing)

@@ -41,3 +41,5 @@ function angular_diff_from_pos_y_axis(u)
     α = π/2 - atan(reverse(u)...)
     return α > π ? α - 2π : α
 end
+
+dropoff2tp(track::Track, dropoff) = (; dropoff2tp = norm(track.turning_point - dropoff))
