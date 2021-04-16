@@ -11,7 +11,10 @@ function speedstats(xy, Δt)
 end
 speedstats(track) = (; (Symbol(k, :speed) => speedstats(getproperty(track, k), step(track.t)) for k in (:homing, :searching))...)
 
-function coordinate2group(xy, intervals, nintervals)
+const intervals = sort([5, 10, 30, 60])
+const nintervals = length(intervals) + 1
+
+function coordinate2group(xy)
     l = norm(xy)
     for (i, L) in pairs(intervals)
         if l ≤ L
@@ -21,14 +24,13 @@ function coordinate2group(xy, intervals, nintervals)
     return nintervals
 end
 
-function directionstats(xy, dropoff; intervals = [5, 10, 30, 60], nintervals = length(intervals) + 1)
-    sort!(intervals)
+function directionstats(xy, dropoff)
     if length(xy) < 2
         return missing
     end
     ss = [[Mean(), Mean()] for _ in 1:nintervals]
     for i in 2:length(xy)
-        g = coordinate2group(xy[i] - dropoff, intervals, nintervals)
+        g = coordinate2group(xy[i] - dropoff)
         fit!.(ss[g], LinearAlgebra.normalize(xy[i] - xy[i-1]))
     end
     # [OnlineStats.nobs(s[1]) > 0 ? atand(reverse(value.(s))...) : missing for s in ss]
@@ -44,18 +46,17 @@ end
 dropoff2tp(track::Track, dropoff) = (; dropoff2tp = norm(track.turning_point - dropoff))
 
 
-function finddiscrete(xy, dropoff, intervals, nintervals)
-    g = [coordinate2group(p - dropoff, intervals, nintervals) for p in xy]
+function finddiscrete(xy, dropoff)
+    g = [coordinate2group(p - dropoff) for p in xy]
     Δ = diff(g)
     findall(!iszero, Δ)
 end
 
-function discretedirection(xy, dropoff; intervals = [5, 10, 30, 60], nintervals = length(intervals) + 1)
-    sort!(intervals)
+function discretedirection(xy, dropoff)
     if length(xy) < 2
         return missing
     end
-    map(finddiscrete(xy, dropoff, intervals, nintervals)) do i
+    map(finddiscrete(xy, dropoff)) do i
         isnothing(i) ? missing : rad2deg(angular_diff_from_pos_y_axis(LinearAlgebra.normalize(xy[i + 1] - xy[i])))
     end
 end
