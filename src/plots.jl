@@ -48,3 +48,48 @@ function plotrun_of_tracks(x)
     end
     fig
 end
+
+
+ntentries = OrderedDict(:homing => (linestyle = nothing, linewidth = 1, color = :black),
+                        :fictive_nest => (color = :white, marker = '⋆', strokecolor = :black, markerstrokewidth = 1, strokewidth = 1, markersize = 15px), 
+                        :dropoff => (color = :black, marker = '↓', markersize = 15px),
+                        :turning_point => (color = :black, marker = '•', strokecolor = :transparent, markersize = 15px),
+                       )
+labels = Dict(:homing => "Tracks",
+              :fictive_nest => "Fictive nest",
+              :dropoff => "Dropoff",
+              :turning_point => "Turning points",
+             )
+
+function plotruns(xs::Vector{Standardized})
+
+  fig = Figure(resolution = (1000,1000))
+  ax = fig[1, 1] = Axis(fig, aspect = DataAspect(), xlabel = "X (cm)", ylabel = "Y (cm)")
+
+
+  for (isfirst, x) in flagfirst(xs)
+    s = :homing
+    l = lines!(ax, getproperty(x, s); ntentries[s]...)
+    isfirst && (l.label = labels[s])
+    s = :turning_point
+    l = scatter!(ax, x.turning_point; ntentries[s]...)
+    isfirst && (l.label = labels[s])
+  end
+  x = xs[1]
+  for k in (:fictive_nest, :dropoff)
+    l = scatter!(ax, getproperty(x, k); ntentries[k]...)
+    l.label = labels[k]
+  end
+
+  limits!(ax.finallimits[])
+
+  for radius in MAT2db.intervals
+    lines!(ax, Circle(Point(x.dropoff), radius), color = :grey)
+    text!(ax, string(radius), position = Point2f0(0, radius - 130), align = (:left, :baseline))
+  end
+
+  Legend(fig[0,1], ax, orientation = :vertical, nbanks = 2, tellheight = true, height = Auto(), groupgap = 30);
+
+  fig
+end
+
