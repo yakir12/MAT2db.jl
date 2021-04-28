@@ -11,7 +11,7 @@ function speedstats(xy, Δt)
 end
 speedstats(track) = (; (Symbol(k, :speed) => speedstats(getproperty(track, k), step(track.t)) for k in (:homing, :searching))...)
 
-const intervals = sort([5, 10, 30, 60])
+const intervals = sort([5, 10, 30, 60, 120])
 const nintervals = length(intervals) + 1
 
 function coordinate2group(xy)
@@ -64,3 +64,5 @@ end
 discretedirection(track::Track, dropoff) = (; (Symbol(k, :discretedirection) => discretedirection(getproperty(track, k), dropoff) for k in (:homing, :searching))...)
 
 tp_discretedirection(track::Track) = (; tpdiscretedirection = rad2deg(angular_diff_from_pos_y_axis(LinearAlgebra.normalize(track.coords[track.tp] - track.coords[track.tp - 1]))))
+
+path_length(t::Track) = (; pathlength = sum(norm, diff(t.homing)),)
