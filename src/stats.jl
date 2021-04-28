@@ -43,7 +43,7 @@ function angular_diff_from_pos_y_axis(u)
     return α > π ? α - 2π : α
 end
 
-dropoff2tp(track::Track, dropoff) = (; dropoff2tp = norm(track.turning_point - dropoff))
+dropoff2tp(track::Track, dropoff) = (; vector_length = norm(track.turning_point - dropoff))
 
 
 function finddiscrete(xy, dropoff)
@@ -65,4 +65,4 @@ discretedirection(track::Track, dropoff) = (; (Symbol(k, :discretedirection) => 
 
 tp_discretedirection(track::Track) = (; tpdiscretedirection = rad2deg(angular_diff_from_pos_y_axis(LinearAlgebra.normalize(track.coords[track.tp] - track.coords[track.tp - 1]))))
 
-path_length(t::Track) = (; pathlength = sum(norm, diff(t.homing)),)
+path_length(s) = (; path_length = sum(norm, diff(s.track.homing)), nest_corrected_vector = s.nest2feeder - last(s.track.turning_point))
