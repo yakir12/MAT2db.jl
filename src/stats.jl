@@ -11,7 +11,7 @@ function speedstats(xy, Δt)
 end
 speedstats(track) = (; (Symbol(k, :speed) => speedstats(getproperty(track, k), step(track.t)) for k in (:homing, :searching))...)
 
-const intervals = sort([5, 10, 30, 60, 120])
+const intervals = sort([5, 10, 30, 60, 90, 120])
 const nintervals = length(intervals) + 1
 
 function coordinate2group(xy)
