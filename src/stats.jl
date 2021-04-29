@@ -63,6 +63,6 @@ end
 
 discretedirection(track::Track, dropoff) = (; (Symbol(k, :discretedirection) => discretedirection(getproperty(track, k), dropoff) for k in (:homing, :searching))...)
 
-tp_discretedirection(track::Track) = (; tpdiscretedirection = length(track.coords) < 3 ? missing : rad2deg(angular_diff_from_pos_y_axis(LinearAlgebra.normalize(track.coords[track.tp] - track.coords[track.tp - 1]))))
+tp_discretedirection(track::Track) = (; tpdiscretedirection = track.tp == 1 ? missing : rad2deg(angular_diff_from_pos_y_axis(LinearAlgebra.normalize(track.coords[track.tp] - track.coords[track.tp - 1]))))
 
 path_length(s) = (; path_length = sum(norm, diff(s.track.homing)), nest_corrected_vector = s.nest2feeder - last(s.track.turning_point))
