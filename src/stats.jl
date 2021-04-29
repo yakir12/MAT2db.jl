@@ -65,4 +65,4 @@ discretedirection(track::Track, dropoff) = (; (Symbol(k, :discretedirection) => 
 
 tp_discretedirection(track::Track) = (; tpdiscretedirection = track.tp == 1 ? missing : rad2deg(angular_diff_from_pos_y_axis(LinearAlgebra.normalize(track.coords[track.tp] - track.coords[track.tp - 1]))))
 
-path_length(s) = (; path_length = sum(norm, diff(s.track.homing)), nest_corrected_vector_2 = -s.nest2feeder - last(s.track.turning_point), nest_corrected_vector_1 = last(s.track.turning_point))
+path_length(s) = (; path_length = length(s.track.homing) > 1 ? sum(norm, diff(s.track.homing)) : missing, nest_corrected_vector_2 = -s.nest2feeder - last(s.track.turning_point), nest_corrected_vector_1 = last(s.track.turning_point))
