@@ -66,13 +66,15 @@ function plotruns(xs::Vector{Standardized})
   fig = Figure(resolution = (1000,1000))
   ax = fig[1, 1] = Axis(fig, aspect = DataAspect(), xlabel = "X (cm)", ylabel = "Y (cm)")
 
+  colors = range(colorant"red", stop=colorant"black", length=length(xs) + 1)
+  pop!(colors)
 
-  for (isfirst, x) in flagfirst(xs)
+  for (isfirst, (x, color)) in flagfirst(zip(xs, colors))
     s = :homing
-    l = lines!(ax, getproperty(x, s); ntentries[s]...)
+    l = lines!(ax, getproperty(x, s); ntentries[s]..., color = color)
     isfirst && (l.label = labels[s])
     s = :turning_point
-    l = scatter!(ax, x.turning_point; ntentries[s]...)
+    l = scatter!(ax, x.turning_point; ntentries[s]..., color = color)
     isfirst && (l.label = labels[s])
   end
   x = xs[1]
@@ -85,7 +87,7 @@ function plotruns(xs::Vector{Standardized})
 
   for radius in MAT2db.intervals
     lines!(ax, Circle(Point(x.dropoff), radius), color = :grey)
-    text!(ax, string(radius), position = Point2f0(0, radius - 130), align = (:left, :baseline))
+    text!(ax, string(radius), position = Point2f0(0, radius - x.nest2feeder), align = (:left, :baseline))
   end
 
   Legend(fig[0,1], ax, orientation = :vertical, nbanks = 2, tellheight = true, height = Auto(), groupgap = 30);

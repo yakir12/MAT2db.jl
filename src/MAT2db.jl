@@ -4,6 +4,7 @@ using FilePathsBase, CoordinateTransformations, ImageTransformations, Memoizatio
 using MATLAB, FileIO
 using MAT, SparseArrays, StaticArrays, CSV
 using GLMakie, FFMPEG, ImageMagick
+import GLMakie.@colorant_str
 using OnlineStats
 
 using CameraCalibrations
