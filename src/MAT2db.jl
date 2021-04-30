@@ -9,10 +9,10 @@ using OnlineStats
 
 using CameraCalibrations
 
-using IterTools
+using IterTools, UnPack, Arrow
 
 
-export process_csv, process_run, process_run_of_tracks, plotruns
+export process_csv, process_run, process_run_of_tracks, plotruns, save2db
 
 const pathtype = typeof(Path())
 const csvfile_columns = Dict(:resfile => pathtype, :poi_videofile => pathtype, :poi_names => String, :calib_videofile => pathtype, :extrinsic => Float64, :intrinsic_start => Float64, :intrinsic_stop => Float64, :checker_size => Float64, :nest2feeder => Float64, :azimuth => Float64, :extra_correction => Bool, :turning_point => Float64)
@@ -142,8 +142,17 @@ to_namedtuple(x::T) where {T} = NamedTuple{fieldnames(T)}(ntuple(i -> getfield(x
 
 end
 
-
-
+function save2db(xs, factors_file; filename = "db.arrow")
+  factors = CSV.File(factors_file) |> DataFrame
+  @assert nrow(factors) == length(xs) "number of runs in the factors file must be equal to the number of tracks"
+  df = DataFrame(dropoff = Vector[], fictive_nest = Vector[], nest2feeder = Float64[], pellets = Union{Missing, Vector{Vector}}[], pickup = Union{Missing, Vector}[], runid = String[], coords = Vector{Vector}[], t = StepRangeLen{Float64,Base.TwicePrecision{Float64},Base.TwicePrecision{Float64}}[], tp = Int[])
+  for x in xs
+    @unpack dropoff, fictive_nest, nest2feeder, pellets, pickup, runid, track = x
+    @unpack coords, t, tp = track
+    push!(df, (; dropoff, fictive_nest, nest2feeder, pellets, pickup, runid, coords, t, tp))
+  end
+  Arrow.write(filename, hcat(factors, df, makeunique=true))
+end
 
 end
 
