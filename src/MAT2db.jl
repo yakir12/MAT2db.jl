@@ -22,46 +22,46 @@ include.(("resfiles.jl", "assertions.jl", "calibrations.jl", "quality.jl", "pois
 a_computer_vision_toolbox()
 
 function process_csv(csvfile; debug = false, fun = process_run, delim = nothing)
-    t = loadcsv(csvfile, delim)
-    t2 = map(parserow, t)
-    ss = check4errors.(t2)
-    io = IOBuffer()
-    for (i, s) in enumerate(ss)
-        if !isempty(s)
-            println(io, "\nRun #", i)
-            print(io, s)
-        end
+  t = loadcsv(csvfile, delim)
+  t2 = map(parserow, t)
+  ss = check4errors.(t2)
+  io = IOBuffer()
+  for (i, s) in enumerate(ss)
+    if !isempty(s)
+      println(io, "\nRun #", i)
+      print(io, s)
     end
-    msg = String(take!(io))
-    !isempty(msg) && error(msg)
-    path = joinpath(pwd(), "data")
-    mkpath(joinpath(path, "quality", "runs"))
-    mkpath(joinpath(path, "quality", "calibrations"))
-    mkpath(joinpath(path, "results"))
-    p = Progress(length(t2), 1, "Processing runs...")
-    tracks = progress_map(enumerate(t2), progress=p) do (i, x)
-       @show i
- if debug
-            Memoization.empty_all_caches!();
-             try 
-                fun(x, path, i)
-            catch ex
-                debugging(t[i], ex)
-            end
-        else
-            fun(x, path, i)
-        end
+  end
+  msg = String(take!(io))
+  !isempty(msg) && error(msg)
+  path = joinpath(pwd(), "data")
+  mkpath(joinpath(path, "quality", "runs"))
+  mkpath(joinpath(path, "quality", "calibrations"))
+  mkpath(joinpath(path, "results"))
+  p = Progress(length(t2), 1, "Processing runs...")
+  tracks = progress_map(enumerate(t2), progress=p) do (i, x)
+    @show i
+    if debug
+      Memoization.empty_all_caches!();
+      try 
+        fun(x, path, i)
+      catch ex
+        debugging(t[i], ex)
+      end
+    else
+      fun(x, path, i)
     end
-    df = DataFrame(torow.(tracks))
-    df[:, Not(Cols(:homing, :searching, :track))]  |> CSV.write(joinpath(path, "results", "data.csv"))
-    return tracks
+  end
+  df = DataFrame(torow.(tracks))
+  df[:, Not(Cols(:homing, :searching, :track))]  |> CSV.write(joinpath(path, "results", "data.csv"))
+  return tracks
 end
 
 function loadcsv(file, delim)
-    a_csvfile(file)
-    t = CSV.File(file, normalizenames = true, types = csvfile_columns, delim = delim)
-    a_table(t)
-    return t
+  a_csvfile(file)
+  t = CSV.File(file, normalizenames = true, types = csvfile_columns, delim = delim)
+  a_table(t)
+  return t
 end
 
 parse_intrinsic(::Missing, ::Missing) = missing
@@ -69,50 +69,50 @@ parse_intrinsic(start, stop) = Intrinsic(start, stop)
 parserow(row) = merge(NamedTuple(row), parsepois(row.poi_names), (; intrinsic = parse_intrinsic(row.intrinsic_start, row.intrinsic_stop)))
 
 @memoize Dict function process_run(x, path, i)
-    runi = FilePathsBase.filename(x.resfile)#string(i)
-    mkpath(joinpath(path, "quality", "runs", runi))
+  runi = FilePathsBase.filename(x.resfile)#string(i)
+  mkpath(joinpath(path, "quality", "runs", runi))
 
-    pois = resfile2coords(x.resfile, x.poi_videofile, x.poi_names)
-    for (k, v) in pois
-        plotrawpoi(v, joinpath(path, "quality", "runs", runi,  String(k)))
-    end
+  pois = resfile2coords(x.resfile, x.poi_videofile, x.poi_names)
+  for (k, v) in pois
+    plotrawpoi(v, joinpath(path, "quality", "runs", runi,  String(k)))
+  end
 
-    calibration = Calibration(x.calib_videofile, x.extrinsic, x.intrinsic, x.checker_size)
-    calib = build_calibration(calibration)
-    plotcalibration(calibration, calib, joinpath(path, "quality", "calibrations", string(basename(calibration.video), calibration.extrinsic)))
-    calibrate!.(values(pois), Ref(calib))
+  calibration = Calibration(x.calib_videofile, x.extrinsic, x.intrinsic, x.checker_size)
+  calib = build_calibration(calibration)
+  plotcalibration(calibration, calib, joinpath(path, "quality", "calibrations", string(basename(calibration.video), calibration.extrinsic)))
+  calibrate!.(values(pois), Ref(calib))
 
-    expected = adjust_expected(pois, x.expected_locations)
-    calib2 = build_extra_calibration([only(space(pois[k])) for k in keys(expected)], deepcopy(collect(values(expected))))
-    calib_poi2plot = Dict(k => deepcopy(v) for (k,v) in pois if length(time(v)) == 1)
-    plotcalibratedpoi(calib_poi2plot, calib, joinpath(path, "quality", "runs", runi), expected, calib2)
+  expected = adjust_expected(pois, x.expected_locations)
+  calib2 = build_extra_calibration([only(space(pois[k])) for k in keys(expected)], deepcopy(collect(values(expected))))
+  calib_poi2plot = Dict(k => deepcopy(v) for (k,v) in pois if length(time(v)) == 1)
+  plotcalibratedpoi(calib_poi2plot, calib, joinpath(path, "quality", "runs", runi), expected, calib2)
 
-    if x.extra_correction
-        calibrate!.(values(pois), Ref(calib2))
-    end
+  if x.extra_correction
+    calibrate!.(values(pois), Ref(calib2))
+  end
 
-    flipy!(pois)
-    coords = Dict{Symbol, AbstractArray{T,1} where T}(k => k ∈ (:track, :pellet) ? v.xyt : only(space(v)) for (k,v) in pois if !ismissing(v))
+  flipy!(pois)
+  coords = Dict{Symbol, AbstractArray{T,1} where T}(k => k ∈ (:track, :pellet) ? v.xyt : only(space(v)) for (k,v) in pois if !ismissing(v))
 
 
-    metadata = Dict{Symbol, Any}(:nest2feeder => x.nest2feeder, :azimuth => x.azimuth, :turning_point => x.turning_point, :runid => FilePathsBase.filename(x.resfile))
-    if haskey(x.expected_locations, :dropoff)
-        metadata[:expected_dropoff] = x.expected_locations[:dropoff]
-    end
+  metadata = Dict{Symbol, Any}(:nest2feeder => x.nest2feeder, :azimuth => x.azimuth, :turning_point => x.turning_point, :runid => FilePathsBase.filename(x.resfile))
+  if haskey(x.expected_locations, :dropoff)
+    metadata[:expected_dropoff] = x.expected_locations[:dropoff]
+  end
 
-    z = common(coords, metadata)
-    s = Standardized(z)
-    scene = plotrun(s)
-    save(joinpath(path, "results", "$runi.png"), scene)
+  z = common(coords, metadata)
+  s = Standardized(z)
+  scene = plotrun(s)
+  save(joinpath(path, "results", "$runi.png"), scene)
 
-    return s
+  return s
 
 end
 
 function torow(s::Standardized)
-    fs = (:homing, :searching , :center_of_search, :turning_point, :nest, :feeder)
-    xs = map(f -> getproperty(s,f), fs)
-    return merge(to_namedtuple(s), NamedTuple{fs}(xs), speedstats(s.track), directionstats(s.track, s.dropoff), dropoff2tp(s.track, s.dropoff), discretedirection(s.track, s.dropoff), tp_discretedirection(s.track), path_length(s))
+  fs = (:homing, :searching , :center_of_search, :turning_point, :nest, :feeder)
+  xs = map(f -> getproperty(s,f), fs)
+  return merge(to_namedtuple(s), NamedTuple{fs}(xs), speedstats(s.track), directionstats(s.track, s.dropoff), dropoff2tp(s.track, s.dropoff), discretedirection(s.track, s.dropoff), tp_discretedirection(s.track), path_length(s))
 end
 
 torow(s::Dict) = (; (f => missing for f in (:homing, :searching , :center_of_search, :turning_point, :nest, :feeder))..., track = missing)
@@ -121,25 +121,25 @@ to_namedtuple(x::T) where {T} = NamedTuple{fieldnames(T)}(ntuple(i -> getfield(x
 
 
 @memoize Dict function process_run_of_tracks(x, path, i)
-    runi = string(i)
-    mkpath(joinpath(path, "quality", "runs", runi))
+  runi = string(i)
+  mkpath(joinpath(path, "quality", "runs", runi))
 
-    pois = resfile2coords(x.resfile, x.poi_videofile, x.poi_names)
-    for (k, v) in pois
-        plotrawpoi(v, joinpath(path, "quality", "runs", runi,  String(k)))
-    end
+  pois = resfile2coords(x.resfile, x.poi_videofile, x.poi_names)
+  for (k, v) in pois
+    plotrawpoi(v, joinpath(path, "quality", "runs", runi,  String(k)))
+  end
 
-    calibration = Calibration(x.calib_videofile, x.extrinsic, x.intrinsic, x.checker_size)
-    calib = build_calibration(calibration)
-    plotcalibration(calibration, calib, joinpath(path, "quality", "calibrations", string(basename(calibration.video), calibration.extrinsic)))
-    calibrate!.(values(pois), Ref(calib))
+  calibration = Calibration(x.calib_videofile, x.extrinsic, x.intrinsic, x.checker_size)
+  calib = build_calibration(calibration)
+  plotcalibration(calibration, calib, joinpath(path, "quality", "calibrations", string(basename(calibration.video), calibration.extrinsic)))
+  calibrate!.(values(pois), Ref(calib))
 
-    flipy!(pois)
+  flipy!(pois)
 
-    scene = plotrun_of_tracks(pois)
-    save(joinpath(path, "results", "$runi.png"), scene)
+  scene = plotrun_of_tracks(pois)
+  save(joinpath(path, "results", "$runi.png"), scene)
 
-    return pois
+  return pois
 
 end
 
