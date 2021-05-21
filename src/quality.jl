@@ -45,11 +45,11 @@ function recordit(poi, file, ind, scene)
 end
 
 function recordmovie(poi, file, ind, scene)
-    AbstractPlotting.inline!(true)
+    GLMakie.Makie.inline!(true)
     record(scene, "$file.mp4", eachindex(time(poi))) do i
         ind[] = i
     end
-    AbstractPlotting.inline!(false)
+    GLMakie.Makie.inline!(false)
 end
 
 decompose(imgw) = (UnitRange.(axes(imgw)), parent(imgw))

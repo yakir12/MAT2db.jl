@@ -40,7 +40,7 @@ function process_csv(csvfile; debug = false, fun = process_run, delim = nothing)
   mkpath(joinpath(path, "results"))
   p = Progress(length(t2), 1, "Processing runs...")
   tracks = progress_map(enumerate(t2), progress=p) do (i, x)
-    @show i
+    # @show i
     if debug
       Memoization.empty_all_caches!();
       try 
