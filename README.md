@@ -117,6 +117,12 @@ Each run has one result image showing the track and POIs oriented so that the ne
 Check that:
 - everything looks right.
 
+## Process multiple tracks in one run
+If your data is a video with a beetle repeatedly running the same track you should specify a different processing function, like so:
+```julia
+process_csv(csvfile, fun = process_run_of_tracks)
+```
+
 ## To debug
 If you run into some unknown error, run the `process_csv` function in the debug mode:
 ```julia
