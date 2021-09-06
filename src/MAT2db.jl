@@ -41,7 +41,8 @@ function process_csv(csvfile; debug = false, fun = process_run, delim = nothing)
   p = Progress(length(t2), 1, "Processing runs...")
   tracks = map(enumerate(t2)) do (i, x)
     # @show i
-    track = if debug
+    ProgressMeter.next!(p; showvalues = [(:row, i + 1), (:run, x)])
+    if debug
       Memoization.empty_all_caches!();
       try 
         fun(x, path, i)
@@ -51,8 +52,6 @@ function process_csv(csvfile; debug = false, fun = process_run, delim = nothing)
     else
       fun(x, path, i)
     end
-    ProgressMeter.next!(p; showvalues = [(:iter,i)])
-    track
   end
   df = DataFrame(torow.(tracks))
   df[:, Not(Cols(:homing, :searching, :track))]  |> CSV.write(joinpath(path, "results", "data.csv"))
