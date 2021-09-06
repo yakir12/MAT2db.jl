@@ -41,7 +41,7 @@ function process_csv(csvfile; debug = false, fun = process_run, delim = nothing)
   p = Progress(length(t2), 1, "Processing runs...")
   tracks = map(enumerate(t2)) do (i, x)
     # @show i
-    ProgressMeter.next!(p; showvalues = [(:row, i + 1), (:run, x)])
+    ProgressMeter.next!(p; showvalues = [(:run_number, i), (:csv_row, i + 1)])
     if debug
       Memoization.empty_all_caches!();
       try 
