@@ -38,10 +38,11 @@ function process_csv(csvfile; debug = false, fun = process_run, delim = nothing)
   mkpath(joinpath(path, "quality", "runs"))
   mkpath(joinpath(path, "quality", "calibrations"))
   mkpath(joinpath(path, "results"))
-  p = Progress(length(t2), 1, "Processing runs...")
+  # p = Progress(length(t2), 1, "Processing runs...")
   tracks = map(enumerate(t2)) do (i, x)
     # @show i
-    ProgressMeter.next!(p; showvalues = [(:run_number, i), (:csv_row, i + 1)])
+    # ProgressMeter.next!(p; showvalues = [(:run_number, i), (:csv_row, i + 1)])
+    println(string(i))
     if debug
       Memoization.empty_all_caches!();
       try 
