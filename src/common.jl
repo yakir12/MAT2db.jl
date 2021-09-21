@@ -30,8 +30,8 @@ getfeeder(x, metadata, nest, dropoff, nest2feeder) = haskey(x, :initialfeeder) ?
 
 getpickup(data, ::Missing, _) = missing
 getpickup(data, _, feeder) = haskey(data, :rightdowninitial) ? mean(data[k] for k in (:rightdowninitial, :leftdowninitial, :rightupinitial, :leftupinitial)) : 
-                             haskey(data, :initialfeeder) ? data[:initialfeeder] : 
-                             get(data, :pickup, feeder)
+                             haskey(data, :pickup) ? data[:pickup] : 
+                             get(data, :initialfeeder, feeder)
 
 # getdropoff(data, ::Nothing) = nothing
 getdropoff(data) = haskey(data, :rightdownfinal) ? mean(data[k] for k in (:rightdownfinal, :leftdownfinal, :rightupfinal, :leftupfinal)) : 
