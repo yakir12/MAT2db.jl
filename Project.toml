@@ -44,7 +44,7 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
 AngleBetweenVectors = "0.3"
-Arrow = "1.4"
+Arrow = "1.4, 2"
 CSV = "0.7, 0.8, 0.9"
 CameraCalibrations = "0.2"
 Combinatorics = "1.0"
