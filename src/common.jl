@@ -113,13 +113,13 @@ struct Standardized
     pellets::Union{Missing, Vector{Space}}
     pickup::Union{Missing, Space}
     dropoff::Space
+    nest::Union{Missing, Space}
 end
 
 Base.getproperty(x::Standardized, k::Symbol) = k === :homing ? x.track.homing :
                                          k === :searching ? x.track.searching :
                                          k === :center_of_search ? x.track.center_of_search :
                                          k === :turning_point ? x.track.turning_point :
-                                         k === :nest ? zero(Space) :
                                          k == :feeder ? Space(0.0, -x.nest2feeder) :
                                          getfield(x, k)
 
@@ -131,7 +131,7 @@ function Standardized(x)
     pickup = t(x.pickup)
     dropoff = t(x.dropoff)
     nest2feeder = abs(last(t(x.feeder)))
-    Standardized(x.runid, nest2feeder, fictive_nest, x.track, x.pellets, pickup, dropoff)
+    Standardized(x.runid, nest2feeder, fictive_nest, x.track, x.pellets, pickup, dropoff, x.nest)
 end
 
 get_center(::Missing, fictive_nest) = fictive_nest

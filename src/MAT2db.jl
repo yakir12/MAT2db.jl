@@ -38,11 +38,10 @@ function process_csv(csvfile; debug = false, fun = process_run, delim = nothing)
   mkpath(joinpath(path, "quality", "runs"))
   mkpath(joinpath(path, "quality", "calibrations"))
   mkpath(joinpath(path, "results"))
-  # p = Progress(length(t2), 1, "Processing runs...")
+  p = Progress(length(t2), 1, "Processing runs...")
   tracks = map(enumerate(t2)) do (i, x)
-    # @show i
-    # ProgressMeter.next!(p; showvalues = [(:run_number, i), (:csv_row, i + 1)])
-    println(string(i))
+    ProgressMeter.next!(p; showvalues = [(:run_number, i), (:csv_row, i + 1)])
+    # println(string(i))
     if debug
       Memoization.empty_all_caches!();
       try 
@@ -150,9 +149,9 @@ function save2db(xs, factors_file; filename = "db.arrow")
   @assert nrow(factors) == length(xs) "number of runs in the factors file must be equal to the number of tracks"
   df = DataFrame(nest = Vector[], feeder = Vector[], dropoff = Vector[], fictive_nest = Vector[], nest2feeder = Float64[], pellets = Union{Missing, Vector{Vector}}[], pickup = Union{Missing, Vector}[], runid = String[], coords = Vector{Vector}[], t = StepRangeLen{Float64,Base.TwicePrecision{Float64},Base.TwicePrecision{Float64}}[], tp = Int[])
   for x in xs
-    @unpack dropoff, fictive_nest, nest2feeder, pellets, pickup, runid, track = x
+    @unpack nest, dropoff, fictive_nest, nest2feeder, pellets, pickup, runid, track = x
     @unpack coords, t, tp = track
-    push!(df, (; x.nest, x.feeder, dropoff, fictive_nest, nest2feeder, pellets, pickup, runid, coords, t, tp))
+    push!(df, (; nest, x.feeder, dropoff, fictive_nest, nest2feeder, pellets, pickup, runid, coords, t, tp))
   end
   Arrow.write(filename, hcat(factors, df, makeunique=true))
 end
