@@ -6,6 +6,7 @@ struct Track
     coords::Vector{Space}
     t::StepRangeLen{Float64,Base.TwicePrecision{Float64},Base.TwicePrecision{Float64}}
     tp::Int
+    rawcoords
 end
 
 function findturningpoint(::Missing, spl, tl, _)
@@ -28,7 +29,7 @@ function Track(xyt, tp)
     tl = range(0.0, step = Δt, stop = t[end])
     xyl = Space.(spl.(tl))
     i = findturningpoint(tp, spl, tl, xyt[1].t)
-    Track(xyl, tl, i)
+    Track(xyl, tl, i, xyt)
 end
 
 # homing(t::Track) = t.coords[1:t.tp]

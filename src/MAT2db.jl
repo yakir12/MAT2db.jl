@@ -147,12 +147,12 @@ end
 function save2db(xs, factors_file; filename = "db.arrow")
   factors = CSV.File(factors_file) |> DataFrame
   @assert nrow(factors) == length(xs) "number of runs in the factors file must be equal to the number of tracks"
-  df = DataFrame(nest = Vector[], feeder = Vector[], dropoff = Vector[], fictive_nest = Vector[], nest2feeder = Float64[], pellets = Vector{Vector}[], pickup = Vector[], runid = String[], coords = Vector{Vector}[], t = StepRangeLen{Float64,Base.TwicePrecision{Float64},Base.TwicePrecision{Float64}}[], tp = Int[])
+  df = DataFrame(nest = Vector[], feeder = Vector[], dropoff = Vector[], fictive_nest = Vector[], nest2feeder = Float64[], pellets = Vector{Vector}[], pickup = Vector[], runid = String[], coords = Vector{Vector}[], t = StepRangeLen{Float64,Base.TwicePrecision{Float64},Base.TwicePrecision{Float64}}[], tp = Int[], rawcoords = [])
   allowmissing!(df, [:nest, :pellets, :pickup])
   for x in xs
     @unpack nest, dropoff, fictive_nest, nest2feeder, pellets, pickup, runid, track = x
-    @unpack coords, t, tp = track
-    push!(df, (; nest, x.feeder, dropoff, fictive_nest, nest2feeder, pellets, pickup, runid, coords, t, tp))
+    @unpack coords, t, tp, rawcoords = track
+    push!(df, (; nest, x.feeder, dropoff, fictive_nest, nest2feeder, pellets, pickup, runid, coords, t, tp, rawcoords))
   end
   Arrow.write(filename, hcat(factors, df, makeunique=true))
 end
