@@ -127,6 +127,10 @@ function Standardized(x)
     t = get_transform(x.nest, x.fictive_nest, x.feeder)
     fictive_nest = t(x.fictive_nest)
     map!(t, x.track.coords, x.track.coords)
+    for i in eachindex(x.track.rawcoords)
+      xyt = x.track.rawcoords[i]
+      x.track.rawcoords[i] = SpaceTime(t(xyt.xy), xyt.t)
+    end
     map!(t, x.pellets, x.pellets)
     pickup = t(x.pickup)
     dropoff = t(x.dropoff)

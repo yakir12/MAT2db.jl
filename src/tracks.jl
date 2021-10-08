@@ -23,6 +23,8 @@ end
 
 function Track(xyt, tp)
     sort!(xyt, by = row -> row.t)
+    xyt.t .-= xyt.t[1]
+    unique!(x -> x.xy, xyt)
     Δt = mean(trim(diff(xyt.t), prop = 0.1))
     t, xy = filterdance(xyt.xy, Δt)
     spl = ParametricSpline(t, reduce(hcat, xy); s = 10, k = 1) # s = 500
