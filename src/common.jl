@@ -135,7 +135,7 @@ function Standardized(x)
     pickup = t(x.pickup)
     dropoff = t(x.dropoff)
     nest2feeder = abs(last(t(x.feeder)))
-    Standardized(x.runid, nest2feeder, fictive_nest, x.track, x.pellets, pickup, dropoff, x.nest)
+    Standardized(x.runid, nest2feeder, fictive_nest, x.track, x.pellets, pickup, dropoff, t(x.nest))
 end
 
 get_center(::Missing, fictive_nest) = fictive_nest
