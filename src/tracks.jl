@@ -30,7 +30,7 @@ function Track(xyt, tp)
     tl = range(0.0, step = Δt, stop = t[end])
     xyl = Space.(spl.(tl))
     i = findturningpoint(tp, spl, tl, xyt[1].t)
-    xyt.t .-= xyt.t[1]
+    # xyt.t .-= xyt.t[1]
     Track(xyl, tl, i, xyt)
 end
 
