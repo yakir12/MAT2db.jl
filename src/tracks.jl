@@ -23,7 +23,6 @@ end
 
 function Track(xyt, tp)
     sort!(xyt, by = row -> row.t)
-    xyt.t .-= xyt.t[1]
     unique!(x -> x.xy, xyt)
     Δt = mean(trim(diff(xyt.t), prop = 0.1))
     t, xy = filterdance(xyt.xy, Δt)
@@ -31,6 +30,7 @@ function Track(xyt, tp)
     tl = range(0.0, step = Δt, stop = t[end])
     xyl = Space.(spl.(tl))
     i = findturningpoint(tp, spl, tl, xyt[1].t)
+    xyt.t .-= xyt.t[1]
     Track(xyl, tl, i, xyt)
 end
 
