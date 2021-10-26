@@ -106,6 +106,9 @@ parserow(row) = merge(NamedTuple(row), parsepois(row.poi_names), (; intrinsic = 
   scene = plotrun(s)
   save(joinpath(path, "results", "$runi.png"), scene)
 
+  scene = plotturningpoint(s)
+  save(joinpath(path, "results", "TP$runi.png"), scene)
+
   return s
 
 end

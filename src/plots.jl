@@ -95,3 +95,15 @@ function plotruns(xs::Vector{Standardized})
   fig
 end
 
+function plotturningpoint(x)
+
+    fig = Figure(resolution = (1000,1000))
+    ax = fig[1, 1] = Axis(fig, aspect = DataAspect(), xlabel = "X (cm)", ylabel = "Y (cm)")
+    lines!(ax, x.homing; legendlines[:homing]...)
+    lines!(ax, x.searching[1:5]; legendlines[:searching]...)
+    scatter!(ax, x.dropoff; legendmarkers[:dropoff]...)
+    scatter!(ax, x.turning_point; legendmarkers[:turning_point]...)
+    fig
+
+end
+
