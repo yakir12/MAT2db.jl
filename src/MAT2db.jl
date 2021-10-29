@@ -6,6 +6,7 @@ using MAT, SparseArrays, StaticArrays, CSV
 using GLMakie, FFMPEG, ImageMagick
 import GLMakie.@colorant_str
 using OnlineStats
+using ThreadsX
 
 using CameraCalibrations
 
@@ -39,7 +40,7 @@ function process_csv(csvfile; debug = false, fun = process_run, delim = nothing)
   mkpath(joinpath(path, "quality", "calibrations"))
   mkpath(joinpath(path, "results"))
   p = Progress(length(t2), 1, "Processing runs...")
-  tracks = map(enumerate(t2)) do (i, x)
+  tracks = ThreadsX.map(enumerate(t2)) do (i, x)
     ProgressMeter.next!(p; showvalues = [(:run_number, i), (:csv_row, i + 1)])
     # println(string(i))
     if debug
